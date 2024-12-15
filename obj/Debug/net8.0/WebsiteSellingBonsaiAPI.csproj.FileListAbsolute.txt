@@ -567,3 +567,4 @@ C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\refint\Web
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.pdb
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.genruntimeconfig.cache
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\ref\WebsiteSellingBonsaiAPI.dll
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.sourcelink.json

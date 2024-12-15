@@ -13,11 +13,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BonsaisController : ControllerBase
+    public class BonsaisAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
 
-        public BonsaisController(MiniBonsaiDBAPI context)
+        public BonsaisAPIController(MiniBonsaiDBAPI context)
         {
             _context = context;
         }
@@ -167,11 +167,22 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Bonsai>> PostBonsai(Bonsai bonsai)
         {
-            _context.Bonsais.Add(bonsai);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Thêm đối tượng bonsai vào cơ sở dữ liệu
+                _context.Bonsais.Add(bonsai);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetBonsai", new { id = bonsai.Id }, bonsai);
+                // Trả về đối tượng Bonsai đã được tạo
+                return CreatedAtAction("GetBonsai", new { id = bonsai.Id }, bonsai);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return StatusCode(500, "Có lỗi xảy ra khi lưu dữ liệu.");
+            }
         }
+
 
         // DELETE: api/Bonsais/5
         [HttpDelete("{id}")]

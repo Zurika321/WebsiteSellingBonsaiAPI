@@ -11,11 +11,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GeneralMeaningsController : ControllerBase
+    public class GeneralMeaningsAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
 
-        public GeneralMeaningsController(MiniBonsaiDBAPI context)
+        public GeneralMeaningsAPIController(MiniBonsaiDBAPI context)
         {
             _context = context;
         }
