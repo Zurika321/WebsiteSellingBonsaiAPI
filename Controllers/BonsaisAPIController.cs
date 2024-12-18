@@ -82,9 +82,9 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         {
             // Sử dụng Include để bao gồm các bảng liên quan
             var bonsai = await _context.Bonsais
-                .Include(b => b.Type)  // Bao gồm BonsaiType
-                .Include(b => b.Style) // Bao gồm Style
-                .Include(b => b.GeneralMeaning) // Bao gồm GeneralMeaning
+                .Include(b => b.Type)
+                .Include(b => b.Style)
+                .Include(b => b.GeneralMeaning)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (bonsai == null)
@@ -134,11 +134,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         // PUT: api/Bonsais/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBonsai(int id, Bonsai bonsai)
+        public async Task<IActionResult> PutBonsai(int id, [FromBody] Bonsai bonsai)
         {
             if (id != bonsai.Id)
             {
-                return BadRequest();
+                return BadRequest("ID không khớp.");
             }
 
             _context.Entry(bonsai).State = EntityState.Modified;
@@ -146,6 +146,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return Ok(bonsai);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -158,9 +159,8 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
         }
+
 
         // POST: api/Bonsais
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -171,10 +171,9 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             {
                 // Thêm đối tượng bonsai vào cơ sở dữ liệu
                 _context.Bonsais.Add(bonsai);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
 
-                // Trả về đối tượng Bonsai đã được tạo
-                return CreatedAtAction("GetBonsai", new { id = bonsai.Id }, bonsai);
+                return CreatedAtAction(nameof(GetBonsai), new { id = bonsai.Id }, bonsai);
             }
             catch (Exception ex)
             {
