@@ -11,11 +11,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BonsaiTypesController : ControllerBase
+    public class BonsaiTypesAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
 
-        public BonsaiTypesController(MiniBonsaiDBAPI context)
+        public BonsaiTypesAPIController(MiniBonsaiDBAPI context)
         {
             _context = context;
         }

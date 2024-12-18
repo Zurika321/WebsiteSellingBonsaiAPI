@@ -13,11 +13,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BonsaisController : ControllerBase
+    public class BonsaisAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
 
-        public BonsaisController(MiniBonsaiDBAPI context)
+        public BonsaisAPIController(MiniBonsaiDBAPI context)
         {
             _context = context;
         }
@@ -82,9 +82,9 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         {
             // Sử dụng Include để bao gồm các bảng liên quan
             var bonsai = await _context.Bonsais
-                .Include(b => b.Type)  // Bao gồm BonsaiType
-                .Include(b => b.Style) // Bao gồm Style
-                .Include(b => b.GeneralMeaning) // Bao gồm GeneralMeaning
+                .Include(b => b.Type)
+                .Include(b => b.Style)
+                .Include(b => b.GeneralMeaning)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (bonsai == null)
@@ -134,11 +134,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         // PUT: api/Bonsais/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBonsai(int id, Bonsai bonsai)
+        public async Task<IActionResult> PutBonsai(int id, [FromBody] Bonsai bonsai)
         {
             if (id != bonsai.Id)
             {
-                return BadRequest();
+                return BadRequest("ID không khớp.");
             }
 
             _context.Entry(bonsai).State = EntityState.Modified;
@@ -146,6 +146,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return Ok(bonsai);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -158,20 +159,29 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
         }
+
 
         // POST: api/Bonsais
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Bonsai>> PostBonsai(Bonsai bonsai)
         {
-            _context.Bonsais.Add(bonsai);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Thêm đối tượng bonsai vào cơ sở dữ liệu
+                _context.Bonsais.Add(bonsai);
+                _context.SaveChanges();
 
-            return CreatedAtAction("GetBonsai", new { id = bonsai.Id }, bonsai);
+                return CreatedAtAction(nameof(GetBonsai), new { id = bonsai.Id }, bonsai);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return StatusCode(500, "Có lỗi xảy ra khi lưu dữ liệu.");
+            }
         }
+
 
         // DELETE: api/Bonsais/5
         [HttpDelete("{id}")]
