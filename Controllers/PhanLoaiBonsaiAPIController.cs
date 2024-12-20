@@ -30,7 +30,12 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 .Select(t => new BonsaiType
                 {
                     Id = t.Id,
-                    Name = t.Name
+                    Name = t.Name,
+                    CreatedBy = t.CreatedBy,
+                    CreatedDate = t.CreatedDate,
+                    UpdatedDate = t.UpdatedDate,
+                    UpdatedBy = t.UpdatedBy,
+              
                 })
                 .ToListAsync();
 
@@ -38,7 +43,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 .Select(gm => new GeneralMeaning
                 {
                     Id = gm.Id,
-                    Meaning = gm.Meaning
+                    Meaning = gm.Meaning,
+                    CreatedBy = gm.CreatedBy,
+                    CreatedDate = gm.CreatedDate,
+                    UpdatedDate = gm.UpdatedDate,
+                    UpdatedBy = gm.UpdatedBy,
                 })
                 .ToListAsync();
 
@@ -46,7 +55,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 .Select(s => new Style
                 {
                     Id = s.Id,
-                    Name = s.Name
+                    Name = s.Name,
+                    CreatedBy = s.CreatedBy,
+                    CreatedDate = s.CreatedDate,
+                    UpdatedDate = s.UpdatedDate,
+                    UpdatedBy = s.UpdatedBy,
                 })
                 .ToListAsync();
 

@@ -5,7 +5,7 @@ using WebsiteSellingBonsaiAPI.Models;
 namespace WebsiteSellingBonsaiAPI.Models
 {
     [Table("Types")]
-    public class BonsaiType
+    public class BonsaiType : BaseModel
     {
         [Key]
         public int Id { get; set; }

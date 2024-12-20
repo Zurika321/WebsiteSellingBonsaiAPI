@@ -28,8 +28,12 @@ namespace WebsiteSellingBonsaiAPI.Utils
         {
             if (imageFile != null)
             {
+                if (!string.IsNullOrEmpty(imageOldPath)) {
+                    var erorrdeleteimage = DeleteImage(imageOldPath, Link);
+                }
+                
                 var webRootPath = _hostEnv.WebRootPath;
-                var uploadFolder = Path.Combine(webRootPath, "Data/Product");
+                var uploadFolder = Path.Combine(webRootPath, $"Data/{Link}");
 
                 if (!Directory.Exists(uploadFolder))
                 {
@@ -41,7 +45,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 var newFileName = $"{fileName}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
                 var filePath = Path.Combine(uploadFolder, newFileName);
 
-                //var newFileName = $"{Guid.NewGuid()}{extension}"; bảo mật 1
+                //var newFileName = $"{Guid.NewGuid().toString()}{extension}"; bảo mật 1
                 //var fileBytes = memoryStream.ToArray(); bảo mật siêu cấp
                 //var hash = SHA256.HashData(fileBytes);
                 //var fileHash = BitConverter.ToString(hash).Replace("-", "").ToLower();
@@ -51,10 +55,42 @@ namespace WebsiteSellingBonsaiAPI.Utils
                     await imageFile.CopyToAsync(fileStream);
                 }
 
-                return $"Data/Product/{newFileName}";
+                return $"Data/{Link}/{newFileName}";
             }
 
             return string.IsNullOrEmpty(imageOldPath) ? "" : imageOldPath;
+        }
+
+        public async Task<string> DeleteImage( string image,string Link)
+        {
+            if (string.IsNullOrEmpty(image))
+            {
+                return "Không có ảnh để xóa.";
+            }
+
+            if (!Link.StartsWith("Data/"))
+            {
+                Link = "Data/" + Link;
+            }
+
+            var filePath = Path.Combine(_hostEnv.WebRootPath, Link, image);
+
+            try
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                    return "";
+                }
+                else
+                {
+                    return "Tệp không tồn tại.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Lỗi khi xóa ảnh: {ex.Message}";
+            }
         }
 
         // Lấy dữ liệu qua phương thức GET, trả về danh sách
