@@ -1,11 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using static System.Net.Mime.MediaTypeNames;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebsiteSellingBonsaiAPI.Models
+namespace WebsiteSellingBonsaiAPI.DTOS
 {
-    [Table("AdminUsers")]
-    public class AdminUser //: BaseModel
+    public class AdminUserDTO
     {
         [Key]
         public int USE_ID { get; set; }
@@ -14,7 +11,8 @@ namespace WebsiteSellingBonsaiAPI.Models
         public string? Displayname { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
-        public string? Avatar { get; set; }
+        public IFormFile? Avatar { get; set; }
+        public string? AvatarOld { get; set; }
         public string? Role { get; set; }
         public string? Address { get; set; }
     }

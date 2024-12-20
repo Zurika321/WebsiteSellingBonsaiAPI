@@ -4,11 +4,10 @@ using WebsiteSellingBonsaiAPI.Models;
 
 namespace WebsiteSellingBonsaiAPI.DTOS
 {
-    public class BonsaiDTO
+    public class BonsaiDTO : BaseModel
     {
         [Key]
         public int Id { get; set; }
-        [Column("Name")]
         public string BonsaiName { get; set; }
         public string Description { get; set; }
         public string FengShuiMeaning { get; set; }

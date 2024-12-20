@@ -52,24 +52,37 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 Type = new BonsaiType
                 {
                     Id = bonsai.Type.Id,
-                    Name = bonsai.Type.Name
+                    Name = bonsai.Type.Name,
+                    CreatedDate = bonsai.Type.CreatedDate,
+                    CreatedBy = bonsai.Type.CreatedBy,
+                    UpdatedBy = bonsai.Type.UpdatedBy,
+                    UpdatedDate = bonsai.Type.UpdatedDate,
+
                 },
                 StyleId = bonsai.StyleId,
                 Style = new Style
                 {
                     Id = bonsai.Style.Id,
-                    Name = bonsai.Style.Name
+                    Name = bonsai.Style.Name,
+                    CreatedDate = bonsai.Style.CreatedDate,
+                    CreatedBy = bonsai.Style.CreatedBy,
+                    UpdatedBy = bonsai.Style.UpdatedBy,
+                    UpdatedDate = bonsai.Style.UpdatedDate,
                 },
                 GeneralMeaningId = bonsai.GeneralMeaningId,
                 GeneralMeaning = new GeneralMeaning
                 {
                     Id = bonsai.GeneralMeaning.Id,
-                    Meaning = bonsai.GeneralMeaning.Meaning
+                    Meaning = bonsai.GeneralMeaning.Meaning,
+                    CreatedDate = bonsai.GeneralMeaning.CreatedDate,
+                    CreatedBy = bonsai.GeneralMeaning.CreatedBy,
+                    UpdatedBy = bonsai.GeneralMeaning.UpdatedBy,
+                    UpdatedDate = bonsai.GeneralMeaning.UpdatedDate,
                 },
-                //CreatedBy = bonsai.CreatedBy,
-                //CreatedDate = bonsai.CreatedDate,
-                //UpdatedBy = bonsai.UpdatedBy,
-                //UpdatedDate = bonsai.UpdatedDate,
+                CreatedDate = bonsai.CreatedDate,
+                CreatedBy = bonsai.CreatedBy,
+                UpdatedBy = bonsai.UpdatedBy,
+                UpdatedDate = bonsai.UpdatedDate,
             }).ToList();
 
             return Ok(bonsaiDTOs); // Trả về danh sách DTO
@@ -111,20 +124,36 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 Type = bonsai.Type != null ? new BonsaiType
                 {
                     Id = bonsai.Type.Id,
-                    Name = bonsai.Type.Name
+                    Name = bonsai.Type.Name,
+                    CreatedDate = bonsai.Type.CreatedDate,
+                    CreatedBy = bonsai.Type.CreatedBy,
+                    UpdatedBy = bonsai.Type.UpdatedBy,
+                    UpdatedDate = bonsai.Type.UpdatedDate,
                 } : null,
                 StyleId = bonsai.StyleId,
                 Style = bonsai.Style != null ? new Style
                 {
                     Id = bonsai.Style.Id,
-                    Name = bonsai.Style.Name
+                    Name = bonsai.Style.Name,
+                    CreatedDate = bonsai.Style.CreatedDate,
+                    CreatedBy = bonsai.Style.CreatedBy,
+                    UpdatedBy = bonsai.Style.UpdatedBy,
+                    UpdatedDate = bonsai.Style.UpdatedDate,
                 } : null,
                 GeneralMeaningId = bonsai.GeneralMeaningId,
                 GeneralMeaning = bonsai.GeneralMeaning != null ? new GeneralMeaning
                 {
                     Id = bonsai.GeneralMeaning.Id,
-                    Meaning = bonsai.GeneralMeaning.Meaning
+                    Meaning = bonsai.GeneralMeaning.Meaning,
+                    CreatedDate = bonsai.GeneralMeaning.CreatedDate,
+                    CreatedBy = bonsai.GeneralMeaning.CreatedBy,
+                    UpdatedBy = bonsai.GeneralMeaning.UpdatedBy,
+                    UpdatedDate = bonsai.GeneralMeaning.UpdatedDate,
                 } : null,
+                CreatedDate = bonsai.CreatedDate,
+                CreatedBy = bonsai.CreatedBy,
+                UpdatedBy = bonsai.UpdatedBy,
+                UpdatedDate = bonsai.UpdatedDate,
             };
 
             return bonsaiDTO;
@@ -146,7 +175,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
-                return Ok(bonsai);
+                return CreatedAtAction(nameof(GetBonsai), new { id = bonsai.Id }, bonsai);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -171,7 +200,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             {
                 // Thêm đối tượng bonsai vào cơ sở dữ liệu
                 _context.Bonsais.Add(bonsai);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return CreatedAtAction(nameof(GetBonsai), new { id = bonsai.Id }, bonsai);
             }

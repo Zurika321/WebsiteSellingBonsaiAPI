@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace WebsiteSellingBonsaiAPI.Models
 {
     [Table("GeneralMeanings")]
-    public class GeneralMeaning
+    public class GeneralMeaning : BaseModel
     {
         [Key]
         public int Id { get; set; }

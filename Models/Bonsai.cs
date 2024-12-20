@@ -4,12 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebsiteSellingBonsaiAPI.Models
 {
-    public class Bonsai
+    public class Bonsai : BaseModel
     {
         [Key]
         public int Id { get; set; } // Id khớp với cột Id trong DB
 
-        [Column("Name")]
         public string BonsaiName { get; set; } // Tên ánh xạ tới cột Name
 
         public string Description { get; set; }
