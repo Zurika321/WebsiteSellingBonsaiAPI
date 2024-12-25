@@ -12,6 +12,6 @@ namespace WebsiteSellingBonsaiAPI.Models
         [Column("Name")]
         public string Name { get; set; }
 
-        public ICollection<Bonsai> Bonsais { get; set; }
+        public ICollection<Bonsai>? Bonsais { get; set; }
     }
 }

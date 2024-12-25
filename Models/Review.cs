@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace WebsiteSellingBonsaiAPI.Models
 {
     [Table("Reviews")]
-    public class Review :BaseModel
+    public class Review : BaseModel
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

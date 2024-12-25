@@ -13,4 +13,5 @@ public class MiniBonsaiDBAPI : DbContext
     public DbSet<GeneralMeaning> GeneralMeaning { get; set; }
     public DbSet<Style> Styles { get; set; }
     public DbSet<WebsiteSellingBonsaiAPI.Models.AdminUser> AdminUser { get; set; } = default!;
+    public DbSet<Banner> banners { get; set; }
 }

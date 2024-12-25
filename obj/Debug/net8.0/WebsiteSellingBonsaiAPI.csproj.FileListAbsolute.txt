@@ -553,6 +553,7 @@ C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSel
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.csproj.CoreCompileInputs.cache
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.sourcelink.json
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets\msbuild.WebsiteSellingBonsaiAPI.Microsoft.AspNetCore.StaticWebAssets.props
@@ -567,4 +568,7 @@ C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\refint\Web
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.pdb
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.genruntimeconfig.cache
 C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\ref\WebsiteSellingBonsaiAPI.dll
-C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\WebsiteSellingBonsaiAPI.sourcelink.json
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\bin\Debug\net8.0\WebsiteSellingBonsaiAPI.staticwebassets.endpoints.json
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets\msbuild.WebsiteSellingBonsaiAPI.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
+C:\Users\NAM VO\source\repos\WebsiteSellingBonsaiAPI\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
