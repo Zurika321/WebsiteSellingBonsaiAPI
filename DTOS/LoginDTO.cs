@@ -1,4 +1,6 @@
-﻿namespace WebsiteSellingBonsaiAPI.DTOS
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebsiteSellingBonsaiAPI.DTOS
 {
     public class LoginDTO
     {

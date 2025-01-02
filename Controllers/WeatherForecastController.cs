@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebsiteSellingBonsaiAPI.DTOS.User;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {
-	[ApiController]
+    //[Authorize(Roles = UserRoles.Admin)]
+    [ApiController]
 	[Route("[controller]")]
 	public class WeatherForecastController : ControllerBase
 	{
