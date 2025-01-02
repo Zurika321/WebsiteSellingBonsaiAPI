@@ -8,15 +8,17 @@ using Microsoft.EntityFrameworkCore;
 using WebsiteSellingBonsaiAPI.Models;
 using WebsiteSellingBonsaiAPI.DTOS;
 using System.Net.Http;
+using Microsoft.AspNetCore.Authorization;
+using WebsiteSellingBonsaiAPI.DTOS.User;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class BonsaisAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
-
         public BonsaisAPIController(MiniBonsaiDBAPI context)
         {
             _context = context;
@@ -88,8 +90,9 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             return Ok(bonsaiDTOs); // Trả về danh sách DTO
         }
 
-
         // GET: api/Bonsais/5
+        //[AllowAnonymous]
+        [Authorize(Policy = UserRoles.AdminOrUser)]
         [HttpGet("{id}")]
         public async Task<ActionResult<BonsaiDTO>> GetBonsai(int id)
         {

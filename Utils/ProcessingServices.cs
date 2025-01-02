@@ -28,10 +28,6 @@ namespace WebsiteSellingBonsaiAPI.Utils
         {
             if (imageFile != null)
             {
-                if (!string.IsNullOrEmpty(imageOldPath)) {
-                    var erorrdeleteimage = DeleteImage(imageOldPath, Link);
-                }
-                
                 var webRootPath = _hostEnv.WebRootPath;
                 var uploadFolder = Path.Combine(webRootPath, $"Data/{Link}");
 
@@ -53,6 +49,10 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await imageFile.CopyToAsync(fileStream);
+                }
+                
+                if (!string.IsNullOrEmpty(imageOldPath)) {
+                    var erorrdeleteimage = DeleteImage(imageOldPath, Link);
                 }
 
                 return $"Data/{Link}/{newFileName}";

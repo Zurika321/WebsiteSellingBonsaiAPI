@@ -1,11 +1,12 @@
 {
   "Version": 1,
-  "Hash": "QL/CpQbS+GkFbbLDJYEQN64UrYya9VIU+ai6o7gJHEM=",
+  "Hash": "3oE/l26lgDh0w1gZBLZ6IwQH0SmOFQJyQi3GIMVVeAc=",
   "Source": "WebsiteSellingBonsaiAPI",
   "BasePath": "_content/WebsiteSellingBonsaiAPI",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
   "DiscoveryPatterns": [],
-  "Assets": []
+  "Assets": [],
+  "Endpoints": []
 }
