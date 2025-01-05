@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using WebsiteSellingBonsaiAPI.Models;
 
 namespace WebsiteSellingBonsaiAPI.Models
 {
@@ -16,6 +18,5 @@ namespace WebsiteSellingBonsaiAPI.Models
         {
             base.OnModelCreating(builder);
         }
-        public DbSet<AdminUser> AdminUsers { get; set; }
     }
 }

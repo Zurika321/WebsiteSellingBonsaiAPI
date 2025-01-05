@@ -141,22 +141,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.AuthenticateController",
-    "Method": "RegisterAdmin",
-    "RelativePath": "api/Authenticate/register-admin",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "model",
-        "Type": "WebsiteSellingBonsaiAPI.DTOS.User.RegisterModel",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.BannersAPIController",
     "Method": "Getbanners",
     "RelativePath": "api/BannersAPI",
