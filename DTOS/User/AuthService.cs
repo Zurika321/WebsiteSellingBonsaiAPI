@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using WebsiteSellingBonsaiAPI.Utils;
 
 namespace WebsiteSellingBonsaiAPI.DTOS.User
 {
@@ -12,42 +13,69 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+        public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<bool> RegisterUser(RegisterModel model)
+        public async Task<(bool IsSuccess, string Message)> RegisterUser(RegisterModel model)
         {
+            // Kiểm tra xem người dùng đã tồn tại hay chưa
             var userExists = await _userManager.FindByNameAsync(model.Username);
             if (userExists != null)
-                return false;
+            {
+                return (false, "User already exists!");
+            }
 
+            // Tạo đối tượng người dùng
             var user = new ApplicationUser
             {
                 UserName = model.Username,
-                Email = model.Email
+                Email = model.Email,
             };
 
+            // Tạo người dùng với mật khẩu
             var result = await _userManager.CreateAsync(user, model.Password);
-            return result.Succeeded;
+
+            // Kiểm tra xem việc tạo người dùng có thành công không
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return (false, $"User creation failed: {errors}");
+            }
+
+            // Gán vai trò cho người dùng
+            await _userManager.AddToRoleAsync(user, "User");
+
+            return (true, "User created successfully!");
         }
 
-        public async Task<string?> LoginUser(LoginModel model)
+        public async Task<(string? Token, DateTime? Expiration, List<string>? Roles, string? Error)> LoginUser(LoginModel model)
         {
+            // Kiểm tra xem người dùng có tồn tại không
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-                return null;
+                return (null, null, null, "Invalid credentials!");
 
+            // Lấy danh sách vai trò của người dùng
+            var roles = await _userManager.GetRolesAsync(user);
             var authClaims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
-            // Generate token
+            // Thêm vai trò vào claims
+            foreach (var role in roles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            // Tạo token
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
@@ -57,7 +85,12 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            // Lưu token vào session
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            _httpContextAccessor.HttpContext.Session.Set("AuthToken", tokenString);
+
+            // Trả về token, thời gian hết hạn và danh sách vai trò
+            return (tokenString, token.ValidTo, roles.ToList(), null);
         }
     }
 

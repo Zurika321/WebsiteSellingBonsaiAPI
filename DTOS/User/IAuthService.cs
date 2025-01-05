@@ -5,7 +5,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
 {
     public interface IAuthService
     {
-        Task<bool> RegisterUser(RegisterModel model);
-        Task<string> LoginUser(LoginModel model);
+        Task<(bool IsSuccess, string Message)> RegisterUser(RegisterModel model);
+        Task<(string? Token, DateTime? Expiration, List<string>? Roles, string? Error)> LoginUser(LoginModel model);
     }
 }

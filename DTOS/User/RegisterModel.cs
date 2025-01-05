@@ -6,8 +6,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
     {
         public string Username { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
-        //[JsonPropertyName("FullName")]
-        //public string FullName { get; set; }
+        public required string Password { get; set; }
+        public string? ComfrimPassword { get; set; }
     }
 }

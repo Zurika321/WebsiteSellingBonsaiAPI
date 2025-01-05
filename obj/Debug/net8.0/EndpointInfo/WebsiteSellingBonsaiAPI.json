@@ -222,37 +222,6 @@
         }
       }
     },
-    "/api/Authenticate/register-admin": {
-      "post": {
-        "tags": [
-          "Authenticate"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/Authenticate/login": {
       "post": {
         "tags": [
@@ -1731,13 +1700,16 @@
       "LoginModel": {
         "type": "object",
         "properties": {
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
           "username": {
             "type": "string",
             "nullable": true
           },
-          "password": {
-            "type": "string",
-            "nullable": true
+          "rememberMe": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -1781,6 +1753,10 @@
             "nullable": true
           },
           "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "comfrimPassword": {
             "type": "string",
             "nullable": true
           }
