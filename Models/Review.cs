@@ -14,8 +14,8 @@ namespace WebsiteSellingBonsaiAPI.Models
         [ForeignKey("Bonsai")]
         public int BonsaiId { get; set; }
 
-        [ForeignKey("AdminUser")]
-        public int USE_ID { get; set; }
+        [ForeignKey("ApplicationUser")]
+        public string USE_ID { get; set; }
 
         [Range(1, 5, ErrorMessage = "Chỉ nhận từ 1 đến 5")]
         public float Rate { get; set; }
@@ -24,6 +24,6 @@ namespace WebsiteSellingBonsaiAPI.Models
         public string Comment { get; set; }
 
         public Bonsai Bonsai { get; set; }
-        public AdminUser AdminUser { get; set; }
+        public virtual ApplicationUser ApplicationUser { get; set; }
     }
 }
