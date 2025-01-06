@@ -12,8 +12,8 @@ namespace WebsiteSellingBonsaiAPI.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ORDER_ID { get; set; }
 
-        [ForeignKey("AdminUser")]
-        public int USE_ID { get; set; }
+        [ForeignKey("ApplicationUser")]
+        public string USE_ID { get; set; }
 
         [StringLength(100)]
         public string PaymentMethod { get; set; }
@@ -24,6 +24,7 @@ namespace WebsiteSellingBonsaiAPI.Models
         [Range(0, double.MaxValue, ErrorMessage = "Total must be a positive value.")]
         public decimal Total { get; set; }
 
-        public virtual AdminUser AdminUser { get; set; }
+        public virtual ApplicationUser ApplicationUser { get; set; }
+
     }
 }
