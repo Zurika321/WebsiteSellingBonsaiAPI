@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebsiteSellingBonsaiAPI.DTOS;
+using WebsiteSellingBonsaiAPI.DTOS.Cart;
 using WebsiteSellingBonsaiAPI.Models;
 using WebsiteSellingBonsaiAPI.Utils;
 
@@ -17,20 +20,16 @@ namespace WebsiteSellingBonsaiAPI.Controllers
     public class CartsAPIController : ControllerBase
     {
         private readonly MiniBonsaiDBAPI _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CartsAPIController(MiniBonsaiDBAPI context)
+        public CartsAPIController(MiniBonsaiDBAPI context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: api/Carts
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Cart>>> GetCarts()
-        {
-            return await _context.Carts.ToListAsync();
-        }
 
-        // GET: api/Carts/5
+        [Authorize]
         [HttpGet("{userId}")]
         public async Task<ActionResult<Cart>> GetCart(string userId)
         {
@@ -46,136 +45,152 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             return cart;
         }
 
-        [HttpPost("addbonsai")]
+        [Authorize]
+        [HttpPost("AddBonsai")]
         public async Task<IActionResult> AddBonsai([FromBody] Addcart request)
         {
-            // Lấy thông tin người dùng hiện tại
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized(new { Message = "Người dùng chưa đăng nhập." });
-            }
-
-            // Kiểm tra sản phẩm có tồn tại không
-            var bonsai = await _context.Bonsais.FindAsync(request.bonsai_id);
-            if (bonsai == null)
-            {
-                return NotFound(new { Message = "Sản phẩm không tồn tại." });
-            }
-
-            // Tìm giỏ hàng của người dùng
-            var cart = await _context.Carts
-                .Include(c => c.CartDetails)
-                .FirstOrDefaultAsync(c => c.USE_ID == userId);
-
-            if (cart == null)
-            {
-                var userInfo = HttpContext.Session.Get<ApplicationUser>("userInfo");
-                cart = new Cart
-                {
-                    USE_ID = userId,
-                    CreatedBy = userInfo.UserName,
-                    CreatedDate = DateTime.Now,
-                    UpdatedBy = userInfo.UserName,
-                    UpdatedDate = DateTime.Now,
-                };
-                _context.Carts.Add(cart);
-                await _context.SaveChangesAsync();
-
-                cart = await _context.Carts
-                .Include(c => c.CartDetails)
-                .FirstOrDefaultAsync(c => c.USE_ID == userId);
-            }
-
-            // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
-            var cartDetail = cart.CartDetails
-                .FirstOrDefault(cd => cd.BONSAI_ID == request.bonsai_id);
-
-            if (cartDetail == null)
-            {
-                // Thêm sản phẩm mới vào giỏ hàng
-                cartDetail = new CartDetail
-                {
-                    CART_ID = cart.CART_ID,
-                    BONSAI_ID = bonsai.Id,
-                    Price = bonsai.Price,
-                    Quantity = request.quantity,
-                };
-                cart.CartDetails.Add(cartDetail);
-            }
-            else
-            {
-                // Cập nhật số lượng sản phẩm trong giỏ hàng
-                cartDetail.Quantity += request.quantity;
-            }
-
-            // Lưu thay đổi vào cơ sở dữ liệu
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Message = "Sản phẩm đã được thêm vào giỏ hàng." });
-        }
-
-        // PUT: api/Carts/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCart(int id, Cart cart)
-        {
-            if (id != cart.CART_ID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(cart).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CartExists(id))
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userId == null)
                 {
-                    return NotFound();
+                    return Unauthorized(new { Message = "Người dùng chưa đăng nhập." });
+                }
+
+                var bonsai = await _context.Bonsais.FindAsync(request.bonsai_id);
+                if (bonsai == null)
+                {
+                    return NotFound(new { Message = "Sản phẩm không tồn tại." });
+                }
+
+                var cart = await _context.Carts
+                    .Include(c => c.CartDetails)
+                    .FirstOrDefaultAsync(c => c.USE_ID == userId);
+
+                if (cart == null)
+                {
+                    cart = new Cart
+                    {
+                        USE_ID = userId,
+                        CreatedBy = User.Identity.Name,
+                        CreatedDate = DateTime.Now,
+                        UpdatedBy = User.Identity.Name,
+                        UpdatedDate = DateTime.Now,
+                        CartDetails = new List<CartDetail>()
+                    };
+                    _context.Carts.Add(cart);
+                }
+
+                var cartDetail = cart.CartDetails
+                    .FirstOrDefault(cd => cd.BONSAI_ID == request.bonsai_id);
+
+                bool themmoi = false;
+                if (cartDetail == null)
+                {
+                    cartDetail = new CartDetail
+                    {
+                        CART_ID = cart.CART_ID,
+                        BONSAI_ID = bonsai.Id,
+                        Price = bonsai.Price,
+                        Quantity = request.quantity,
+                    };
+                    cart.CartDetails.Add(cartDetail);
+                    themmoi = true;
                 }
                 else
                 {
-                    throw;
+                    cartDetail.Quantity += request.quantity;
                 }
+
+                await _context.SaveChangesAsync();
+
+                string mesenger = themmoi ? "Sản phẩm đã được thêm vào giỏ hàng." : $"Sản phẩm đã có trong giỏ hàng, số lượng hiện tại {cartDetail.Quantity}";
+                return Ok(new { Message = mesenger });
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Carts
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Cart>> PostCart(Cart cart)
-        {
-            _context.Carts.Add(cart);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCart", new { id = cart.CART_ID }, cart);
-        }
-
-        // DELETE: api/Carts/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCart(int id)
-        {
-            var cart = await _context.Carts.FindAsync(id);
-            if (cart == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(500, new { Message = $"Đã xảy ra lỗi khi thêm sản phẩm vào giỏ hàng: {ex}" });
             }
-
-            _context.Carts.Remove(cart);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool CartExists(int id)
+        [HttpPut("update_cart")]
+        public async Task<IActionResult> update_cart(Update_cart update_cart)
         {
-            return _context.Carts.Any(e => e.CART_ID == id);
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { Message = "Không thể xác định người dùng." });
+                }
+
+                var cartDetail = await _context.CartDetails
+                    .Include(cd => cd.Cart)
+                    .FirstOrDefaultAsync(cd => cd.CART_D_ID == update_cart.CART_D_ID);
+
+                if (cartDetail == null)
+                {
+                    return NotFound(new { Message = "Sản phẩm trong giỏ hàng không tồn tại." });
+                }
+
+                if (cartDetail.Cart.USE_ID != userId)
+                {
+                    return BadRequest(new { Message = "Không thể sửa sản phẩm của giỏ hàng khác." });
+                }
+
+                if (cartDetail.Quantity > 10 || cartDetail.Quantity < 1)
+                {
+                    return BadRequest(new { Message = "Không thể sửa số lượng sản phẩm thấp hơn 1 hoặc lớn hơn 10." });
+                }
+
+                cartDetail.Quantity = update_cart.quantity;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Sản phẩm đã được cập nhật số lượng." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"Đã xảy ra lỗi khi xóa sản phẩm khỏi giỏ hàng: {ex.Message}" });
+            }
+        }
+
+        [Authorize]
+        [HttpDelete("{CART_D_ID}")]
+        public async Task<IActionResult> RemoveBonsaiInCart(int CART_D_ID)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { Message = "Không thể xác định người dùng." });
+                }
+
+                var cartDetail = await _context.CartDetails
+                    .Include(cd => cd.Cart)
+                    .FirstOrDefaultAsync(cd => cd.CART_D_ID == CART_D_ID);
+
+                if (cartDetail == null)
+                {
+                    return NotFound(new { Message = "Sản phẩm trong giỏ hàng không tồn tại." });
+                }
+
+                if (cartDetail.Cart.USE_ID != userId)
+                {
+                    return BadRequest(new { Message = "Không thể xóa sản phẩm của giỏ hàng khác." });
+                }
+
+                _context.CartDetails.Remove(cartDetail);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Sản phẩm đã được xóa khỏi giỏ hàng." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"Đã xảy ra lỗi khi xóa sản phẩm khỏi giỏ hàng: {ex.Message}" });
+            }
         }
     }
 }

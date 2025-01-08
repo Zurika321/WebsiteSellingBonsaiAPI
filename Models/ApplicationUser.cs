@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Net.Sockets;
 
 namespace WebsiteSellingBonsaiAPI.Models
 {
@@ -6,5 +7,6 @@ namespace WebsiteSellingBonsaiAPI.Models
     {
         public string Avatar { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string Address { get; set; }
     }
 }

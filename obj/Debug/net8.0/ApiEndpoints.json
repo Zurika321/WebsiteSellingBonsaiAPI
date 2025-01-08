@@ -111,7 +111,7 @@
   {
     "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.AuthenticateController",
     "Method": "Login",
-    "RelativePath": "api/Authenticate/login",
+    "RelativePath": "api/Authenticate/Login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -138,6 +138,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.AuthenticateController",
+    "Method": "GetUserInfo",
+    "RelativePath": "api/Authenticate/userinfo",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -462,6 +472,64 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.CartsAPIController",
+    "Method": "RemoveBonsaiInCart",
+    "RelativePath": "api/CartsAPI/{CART_D_ID}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "CART_D_ID",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.CartsAPIController",
+    "Method": "GetCart",
+    "RelativePath": "api/CartsAPI/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebsiteSellingBonsaiAPI.Models.Cart",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebsiteSellingBonsaiAPI.Controllers.CartsAPIController",
+    "Method": "AddBonsai",
+    "RelativePath": "api/CartsAPI/AddBonsai",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "WebsiteSellingBonsaiAPI.DTOS.Addcart",
         "IsRequired": true
       }
     ],

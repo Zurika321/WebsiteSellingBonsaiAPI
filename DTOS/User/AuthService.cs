@@ -6,6 +6,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using WebsiteSellingBonsaiAPI.Utils;
+using Azure.Core;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using NuGet.Common;
+using System.Security.Policy;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace WebsiteSellingBonsaiAPI.DTOS.User
 {
@@ -14,15 +22,27 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly EmailSender _emailSender;
+        private readonly IUrlHelperFactory _urlHelperFactory;
+        private readonly IActionContextAccessor _actionContextAccessor;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public AuthService(
+    UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
+    IHttpContextAccessor httpContextAccessor,
+    EmailSender emailSender,
+    IUrlHelperFactory urlHelperFactory,
+    IActionContextAccessor actionContextAccessor)
         {
             _userManager = userManager;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _emailSender = emailSender;
+            _urlHelperFactory = urlHelperFactory;
+            _actionContextAccessor = actionContextAccessor;
         }
 
-        public async Task<(bool IsSuccess, string Message)> RegisterUser(RegisterModel model)
+        public async Task<(bool IsSuccess, string Message)> RegisterUser([FromForm] RegisterModel model)
         {
             // Kiểm tra xem người dùng đã tồn tại hay chưa
             var userExists = await _userManager.FindByNameAsync(model.Username);
@@ -36,6 +56,8 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             {
                 UserName = model.Username,
                 Email = model.Email,
+                Avatar = "Data/usernoimage.png",
+                CreatedDate = DateTime.Now,
             };
 
             // Tạo người dùng với mật khẩu
@@ -47,6 +69,19 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 return (false, $"User creation failed: {errors}");
             }
+
+            var actionContext = _actionContextAccessor.ActionContext;
+            var urlHelper = _urlHelperFactory.GetUrlHelper(actionContext);
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = urlHelper.Action(
+                action: "ConfirmEmail",
+                controller: "Users",
+                values: new { userId = user.Id, token, area = "Admin" },
+                protocol: actionContext.HttpContext.Request.Scheme);
+
+            await _emailSender.SendEmailAsync(user.Email,
+                "Xác nhận tài khoản",
+                $"Vui lòng nhấp vào link này để xác nhận tài khoản: <a href='{confirmationLink}'>Xác nhận tài khoản</a>");
 
             // Gán vai trò cho người dùng
             await _userManager.AddToRoleAsync(user, "User");
@@ -61,11 +96,18 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return (null, null, null, "Invalid credentials!");
 
+            // Kiểm tra trạng thái EmailConfirmed
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return (null, null, null, "Email của bạn chưa được xác nhận. Vui lòng kiểm tra email.");
+            }
+
             // Lấy danh sách vai trò của người dùng
             var roles = await _userManager.GetRolesAsync(user);
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -87,7 +129,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
 
             // Lưu token vào session
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-            _httpContextAccessor.HttpContext.Session.Set("AuthToken", tokenString);
+            //_httpContextAccessor.HttpContext.Session.SetString("AuthToken", tokenString);
 
             // Trả về token, thời gian hết hạn và danh sách vai trò
             return (tokenString, token.ValidTo, roles.ToList(), null);

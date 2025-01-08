@@ -7,12 +7,16 @@ using NuGet.Common;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Text.Json;
-using WebsiteSellingBonsaiAPI.DTOS;
+using System.Text.Json.Serialization;
+using WebsiteSellingBonsaiAPI.DTOS.Constants;
 using WebsiteSellingBonsaiAPI.DTOS.User;
 using WebsiteSellingBonsaiAPI.Models;
 using static System.Net.WebRequestMethods;
+
 namespace WebsiteSellingBonsaiAPI.Utils
 {
     public class APIServices
@@ -25,22 +29,32 @@ namespace WebsiteSellingBonsaiAPI.Utils
         {
             _hostEnv = hostEnv;
             _httpClient = httpClientFactory.CreateClient();
+
             if (_httpClient.DefaultRequestHeaders.Contains("WebsiteSellingBonsai"))
             {
                 _httpClient.DefaultRequestHeaders.Remove("WebsiteSellingBonsai");
             }
+
             _httpClient.DefaultRequestHeaders.Add("WebsiteSellingBonsai", "kjasdfh32112");
+
             _httpContextAccessor = httpContextAccessor;
-            // Lấy token từ session
-            //var token = _httpContextAccessor.HttpContext?.Session.GetString("AuthToken");
-            //if (!string.IsNullOrEmpty(token))
-            //{
-            //    if (_httpClient.DefaultRequestHeaders.Contains("Authorization"))
-            //    {
-            //        _httpClient.DefaultRequestHeaders.Remove("Authorization");
-            //    }
-            //    _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-            //}
+            var token = _httpContextAccessor.HttpContext?.Session.GetString("AuthToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        //public class token
+        //{
+        //    public string tokenstring { get; set; }
+        //}
+        private class mes
+        {
+            [JsonPropertyName("status")]
+            public string Status { get; set; }
+
+            [JsonPropertyName("message")]
+            public string Message { get; set; }
         }
 
         public string GetUrl()
@@ -53,8 +67,6 @@ namespace WebsiteSellingBonsaiAPI.Utils
             // Xây dựng URL API động
             return $"{scheme}://{host}/api/";
             //return "https://localhost:44351/api/"
-
-
         }
 
         // Hàm xử lý ảnh
@@ -73,13 +85,12 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 var extension = Path.GetExtension(imageFile.FileName);
                 var fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
                 var newFileName = $"{fileName}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
-                var filePath = Path.Combine(uploadFolder, newFileName);
-
                 //var newFileName = $"{Guid.NewGuid().toString()}{extension}"; bảo mật 1
                 //var fileBytes = memoryStream.ToArray(); bảo mật siêu cấp
                 //var hash = SHA256.HashData(fileBytes);
                 //var newFileName = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
+                var filePath = Path.Combine(uploadFolder, newFileName);
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await imageFile.CopyToAsync(fileStream);
@@ -188,7 +199,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
 
             var apiUrl = $"{Url}{apiEndpoint}";
             try
-            {
+            {   
                 var response = await _httpClient.GetAsync(apiUrl);
 
                 if (response.IsSuccessStatusCode)
@@ -234,7 +245,6 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 }); ;
             }
         }
-
         // Gửi dữ liệu qua phương thức POST
         public async Task<(bool Success, ThongBao thongbao)> FetchDataApiPost<T>(string apiEndpoint, T product)
         {
@@ -245,11 +255,15 @@ namespace WebsiteSellingBonsaiAPI.Utils
             {
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, product);
 
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                var message = apiResponse?.Message;
+
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = "Tạo thành công",
+                        Message = message ?? "",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
@@ -258,7 +272,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
@@ -283,15 +297,15 @@ namespace WebsiteSellingBonsaiAPI.Utils
             var apiUrl = $"{Url}{apiEndpoint}";
             try
             {
-                
-
                 var response = await _httpClient.PutAsJsonAsync(apiUrl, product);
-
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                var message = apiResponse?.Message;
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = "Cập nhật thành công",
+                        Message = message ?? "",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
@@ -300,7 +314,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"PUT {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? $"PUT {apiUrl} thất bại. Status Code: {response.StatusCode}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
@@ -330,12 +344,14 @@ namespace WebsiteSellingBonsaiAPI.Utils
             try
             {
                 var response = await _httpClient.DeleteAsync(apiUrl);
-
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                var message = apiResponse?.Message;
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = "Xóa thành công",
+                        Message = message ?? "",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
@@ -344,7 +360,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"DELETE {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? $"DELETE {apiUrl} thất bại. Status Code: {response.StatusCode}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
@@ -369,12 +385,15 @@ namespace WebsiteSellingBonsaiAPI.Utils
             try
             {
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, register);
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<ResponseModel>(jsonString);
+                var message = apiResponse?.Message;
 
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = "Đăng ký thành công!",
+                        Message = message ?? "Đăng ký thành công!",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
@@ -383,7 +402,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
@@ -403,7 +422,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
         public async Task<(bool Success, ThongBao thongbao, string token)> Login(LoginModel login)
         {
             var Url = GetUrl();
-            string apiUrl = $"{Url}Authenticate/login";
+            string apiUrl = $"{Url}Authenticate/Login";
             try
             {
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, login);
@@ -411,7 +430,16 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 if (response.IsSuccessStatusCode)
                 {
                     var apiResponse = await response.Content.ReadFromJsonAsync<ResponseModel>();
-                    _httpContextAccessor.HttpContext?.Session.Set("AuthToken", apiResponse.Message);
+                    if (apiResponse.Status == "Error")
+                    {
+                        return (false, new ThongBao
+                        {
+                            Message = apiResponse.Message,
+                            MessageType = TypeThongBao.Warning,
+                            DisplayTime = 5
+                        }, "");
+                    }
+                    _httpContextAccessor.HttpContext?.Session.SetString("AuthToken", apiResponse.Message );
                     var (Success, thongbao, userInfo) = await Getuserinfo(apiResponse.Message);
                     _httpContextAccessor.HttpContext?.Session.Set<ApplicationUser>("userInfo", userInfo);
 
@@ -426,7 +454,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = $"POST {apiUrl} thất bại. Status Code: {response.RequestMessage}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     }, "");
