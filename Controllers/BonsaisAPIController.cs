@@ -9,7 +9,7 @@ using WebsiteSellingBonsaiAPI.Models;
 using WebsiteSellingBonsaiAPI.DTOS;
 using System.Net.Http;
 using Microsoft.AspNetCore.Authorization;
-using WebsiteSellingBonsaiAPI.DTOS.User;
+using WebsiteSellingBonsaiAPI.DTOS.Constants;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {
@@ -165,6 +165,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // PUT: api/Bonsais/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Policy = UserRoles.Admin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBonsai(int id, [FromBody] Bonsai bonsai)
         {
@@ -196,6 +197,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // POST: api/Bonsais
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize(Policy = UserRoles.Admin)]
         [HttpPost]
         public async Task<ActionResult<Bonsai>> PostBonsai(Bonsai bonsai)
         {
@@ -216,6 +218,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
 
         // DELETE: api/Bonsais/5
+        [Authorize(Policy = UserRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBonsai(int id)
         {

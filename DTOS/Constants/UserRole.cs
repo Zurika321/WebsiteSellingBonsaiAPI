@@ -1,4 +1,4 @@
-﻿namespace WebsiteSellingBonsaiAPI.DTOS.User
+﻿namespace WebsiteSellingBonsaiAPI.DTOS.Constants
 {
     public static class UserRoles
     {

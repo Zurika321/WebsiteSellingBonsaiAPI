@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using WebsiteSellingBonsaiAPI.DTOS.Constants;
 using WebsiteSellingBonsaiAPI.DTOS.User;
 using WebsiteSellingBonsaiAPI.Models;
 
@@ -64,6 +65,15 @@ namespace WebsiteSellingBonsaiAPI
                 });
             });
 
+            builder.Services.AddDistributedMemoryCache(); // Cấu hình bộ nhớ phân tán
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(1); // Thời gian hết hạn session
+                options.Cookie.HttpOnly = true; // Chỉ cho phép truy cập cookie từ server
+                options.Cookie.IsEssential = true; // Đảm bảo cookie luôn được gửi
+            });
+
+
             // Cấu hình CORS để cho phép truy cập từ tất cả các nguồn
             builder.Services.AddCors(options =>
             {
@@ -89,14 +99,14 @@ namespace WebsiteSellingBonsaiAPI
             // Cấu hình Authorization với các chính sách vai trò
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("AdminOrUser", policy =>
+                options.AddPolicy(UserRoles.AdminOrUser, policy =>
                      policy.RequireAssertion(context =>
-                         context.User.IsInRole("Admin") ||
-                         context.User.IsInRole("User")
+                         context.User.IsInRole(UserRoles.Admin) ||
+                         context.User.IsInRole(UserRoles.User)
                      )
                 );
-                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-                options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+                options.AddPolicy(UserRoles.User, policy => policy.RequireRole(UserRoles.User));
+                options.AddPolicy(UserRoles.Admin, policy => policy.RequireRole(UserRoles.Admin));
             });
 
             // Thêm dịch vụ Identity để quản lý người dùng và vai trò
@@ -150,6 +160,7 @@ namespace WebsiteSellingBonsaiAPI
             app.UseAuthentication(); // Xác thực người dùng
             app.UseAuthorization(); // Ủy quyền người dùng
             app.UseCors(MyPolicies); // Cấu hình CORS
+            app.UseSession();
 
             // Định nghĩa các endpoint cho controller
             app.MapControllers();

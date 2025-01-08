@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,9 +14,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NuGet.Common;
 using WebsiteSellingBonsaiAPI.DTOS.User;
 using WebsiteSellingBonsaiAPI.Models;
 using WebsiteSellingBonsaiAPI.Utils;
+using WebsiteSellingBonsaiAPI.DTOS.Constants;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {
@@ -39,10 +43,14 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             _configuration = configuration;
         }
 
-        [HttpPost]
-        [Route("register")]
+        [AllowAnonymous]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            if (model == null)
+            {
+                return BadRequest("Payload không hợp lệ.");
+            }
             var (isSuccess, message) = await _authService.RegisterUser(model);
 
             if (!isSuccess)
@@ -53,8 +61,8 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             return Ok(new ResponseModel { Status = "Success", Message = message });
         }
 
-        [HttpPost]
-        [Route("login")]
+        [AllowAnonymous]
+        [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var (token, expiration, roles, error) = await _authService.LoginUser(model);
@@ -63,17 +71,15 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             {
                 return Unauthorized(new ResponseModel { Status = "Error", Message = error });
             }
-            return Ok(new ResponseModel { Status = "Succes", Message = token });
+            return Ok(new ResponseModel { Status = "Success", Message = token });
         }
 
-        [HttpGet]
-        [Route("userinfo")]
+        [HttpGet("userinfo")]
         public async Task<IActionResult> GetUserInfo()
         {
             try
             {
                 var userName = User.Identity?.Name;
-                Console.WriteLine($"User.Identity.Name: {userName}");
 
                 if (string.IsNullOrEmpty(userName))
                 {
@@ -83,11 +89,8 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 var user = await _userManager.FindByNameAsync(userName);
                 if (user == null)
                 {
-                    Console.WriteLine($"User not found: {userName}");
                     return NotFound(new { Message = "Người dùng không tồn tại." });
                 }
-
-                Console.WriteLine($"Found user: {user.UserName}");
 
                 return Ok(new ApplicationUser
                 {
@@ -104,7 +107,26 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 return StatusCode(500, new { Message = "Lỗi không xác định." });
             }
         }
+        [HttpPost("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmail comfrim)
+        {
+            if (comfrim != null && string.IsNullOrEmpty(comfrim.userId) || string.IsNullOrEmpty(comfrim.token))
+            {
+                return BadRequest("Invalid user ID or token.");
+            }
 
+            var user = await _userManager.FindByIdAsync(comfrim.userId);
+            if (user == null)
+            {
+                return NotFound("Người dùng không tồn tại.");
+            }
 
+            var result = await _userManager.ConfirmEmailAsync(user, comfrim.token);
+            if (result.Succeeded)
+            {
+                return Ok(new { Message = "Xác thực email thành công."});
+            }
+            return StatusCode(500, new { Message = "Xác thực email thất bại" });
+        }
     }
 }

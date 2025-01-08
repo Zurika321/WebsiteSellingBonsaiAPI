@@ -1,4 +1,4 @@
-﻿namespace WebsiteSellingBonsaiAPI.DTOS
+﻿namespace WebsiteSellingBonsaiAPI.DTOS.Constants
 {
     public class ThongBao
     {

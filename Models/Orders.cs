@@ -18,6 +18,12 @@ namespace WebsiteSellingBonsaiAPI.Models
         [StringLength(100)]
         public string PaymentMethod { get; set; }
 
+        [StringLength(100)]
+        public string CancelReason { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string Address { get; set; }
+
         [StringLength(24)]
         public string Status { get; set; }
 
@@ -25,6 +31,6 @@ namespace WebsiteSellingBonsaiAPI.Models
         public decimal Total { get; set; }
 
         public virtual ApplicationUser ApplicationUser { get; set; }
-
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }
