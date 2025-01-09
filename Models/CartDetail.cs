@@ -19,8 +19,8 @@ namespace WebsiteSellingBonsaiAPI.Models
         public decimal TotalPrice => Quantity * Price;
 
         // Navigation properties
-        public virtual Cart Cart { get; set; }
-        public virtual Bonsai Bonsai { get; set; }
+        public virtual Cart? Cart { get; set; }
+        public virtual Bonsai? Bonsai { get; set; }
     }
 }
 

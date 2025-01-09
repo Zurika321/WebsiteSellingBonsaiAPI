@@ -92,7 +92,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // GET: api/Bonsais/5
         //[AllowAnonymous]
-        [Authorize(Policy = UserRoles.AdminOrUser)]
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<BonsaiDTO>> GetBonsai(int id)
         {
@@ -165,7 +165,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // PUT: api/Bonsais/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Policy = UserRoles.Admin)]
+        [Authorize(Policy = UserRoles.User)]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBonsai(int id, [FromBody] Bonsai bonsai)
         {
@@ -197,7 +197,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // POST: api/Bonsais
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Policy = UserRoles.Admin)]
+        [Authorize(Policy = UserRoles.User)]
         [HttpPost]
         public async Task<ActionResult<Bonsai>> PostBonsai(Bonsai bonsai)
         {

@@ -9,8 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using WebsiteSellingBonsaiAPI.DTOS.Constants;
-using WebsiteSellingBonsaiAPI.DTOS.Order;
+using WebsiteSellingBonsaiAPI.DTOS.Orders;
 using WebsiteSellingBonsaiAPI.Models;
+using WebsiteSellingBonsaiAPI.Utils;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {
@@ -160,7 +161,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 var orders = await _context.Orders
                     .Where(o => o.USE_ID == userId)
                     .Include(o => o.OrderDetails)
-                        .ThenInclude(od => od.Bonsais)
+                        .ThenInclude(od => od.Bonsai)
                     .ToListAsync();
 
                 if (orders == null || !orders.Any())
@@ -217,14 +218,8 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             }
         }
 
-        //[HttpGet("create_payment")]
-        //public async Task<ActionResult> CreatePayment(Create_order create_Order)
-        //{
-
-        //}
-
-        [HttpPost("create_order")]
-        public async Task<ActionResult> CreateOrder(Create_order create_Order)
+        [HttpPost("create_payment")]
+        public async Task<ActionResult<Order>> CreatePayment([FromBody] Create_order create_Order)
         {
             var productIds = create_Order.list_bonsai.Contains('_')
                             ? create_Order.list_bonsai.Split('_').Select(int.Parse).ToList()
@@ -262,9 +257,11 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 UpdatedBy = userName,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now,
+                OrderDetails = new List<OrderDetail>()
             };
 
             decimal total = 0;
+            List<OrderDetail> listorderdetail = new List<OrderDetail>();
             for (int i = 0; i < productIds.Count; i++)
             {
                 int productId = productIds[i];
@@ -287,29 +284,173 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     Quantity = quantityInCart,
                     Price = product.Price,
                     ORDER_ID = order.ORDER_ID,
+                    Bonsai = product,
                 };
-                order.OrderDetails.Add(orderDetail);
-
-                product.Quantity -= quantityInCart;
-
+                listorderdetail.Add(orderDetail);
                 total += product.Price * quantityInCart;
             }
-
+            order.OrderDetails = listorderdetail;
             order.Total = total;
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            //HttpContext.Session.Set<Order>("Payment", order);
+            return Ok(order);
+        }
 
-            return Ok(new { Message = "Đặt hàng thành công." });
+        [HttpPost("create_order")]
+        public async Task<ActionResult> CreateOrder([FromBody] Order order)
+        {
+            if (order == null || order.OrderDetails == null || !order.OrderDetails.Any())
+            {
+                return BadRequest("Dữ liệu không đầy đủ.");
+            }
+            var ordernew = new Order
+            {
+                USE_ID = order.USE_ID,
+                PaymentMethod = order.PaymentMethod,
+                Status = order.Status,
+                CancelReason = order.CancelReason,
+                Address = order.Address,
+                CreatedBy = order.CreatedBy,
+                UpdatedBy = order.UpdatedBy,
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now,
+                Total = order.Total,
+            };
+
+            var listOrderDetailsNew = new List<OrderDetail>();
+            foreach (var od in order.OrderDetails)
+            {
+                //od.ORDER_D_ID = default;
+                var orderdetails = new OrderDetail
+                {
+                    BONSAI_ID = od.BONSAI_ID,
+                    Quantity = od.Quantity,
+                    Price = od.Price,
+                };
+                listOrderDetailsNew.Add(orderdetails);
+            }
+
+            order.OrderDetails = listOrderDetailsNew;
+
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _context.Orders.Add(ordernew);
+                    await _context.SaveChangesAsync();
+
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        detail.ORDER_ID = ordernew.ORDER_ID;
+                        _context.OrderDetails.Add(detail);
+                        var bonsai = await _context.Bonsais.FindAsync(detail.BONSAI_ID);
+                        if (bonsai == null)
+                        {
+                            return NotFound(new { Message = $"Không tìm thấy Bonsai với ID: {detail.BONSAI_ID}" });
+                        }
+
+                        // Trừ số lượng của Bonsai
+                        if (bonsai.Quantity < detail.Quantity)
+                        {
+                            return BadRequest(new { Message = $"Số lượng Bonsai không đủ {detail.Quantity} sản phẩm.{bonsai.BonsaiName} còn lại: {bonsai.Quantity} sản phẩm" });
+                        }
+
+                        bonsai.Quantity -= detail.Quantity;
+                    }
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Ok(new { Message = "Đơn hàng đã được tạo thành công." });
+                }
+                catch (Exception ex)
+                {
+                    //await transaction.RollbackAsync();
+                    //return StatusCode(500, new { Message = $"Lỗi khi tạo đơn hàng: {ex.Message}" });
+                    var innerException = ex.InnerException;
+                    // Ghi log hoặc xử lý innerException để biết chi tiết lỗi
+                    return StatusCode(500, new { Message = $"Lỗi khi tạo đơn hàng: {innerException?.Message}" });
+                }
+            }
         }
 
         //[HttpPost("create_order")]
-        //public async Task<ActionResult> CreateOrder(Order order)
+        //public async Task<ActionResult> CreateOrder(Create_order create_Order)
         //{
+        //    var productIds = create_Order.list_bonsai.Contains('_')
+        //                    ? create_Order.list_bonsai.Split('_').Select(int.Parse).ToList()
+        //                    : new List<int> { int.Parse(create_Order.list_bonsai) };
+
+        //    var list_quantity = create_Order.list_quantity.Contains('_')
+        //                      ? create_Order.list_quantity.Split('_').Select(int.Parse).ToList()
+        //                      : new List<int> { int.Parse(create_Order.list_quantity) };
+
+        //    if (productIds.Count != list_quantity.Count)
+        //    {
+        //        return BadRequest(new { Message = $"Danh sách sản phẩm và số lượng không bằng nhau" });
+        //    }
+
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    var userName = User.Identity?.Name;
+
+        //    if (string.IsNullOrEmpty(userId))
+        //    {
+        //        return Unauthorized(new { Message = "Không thể xác định người dùng." });
+        //    }
+
+        //    var products = await _context.Bonsais
+        //        .Where(p => productIds.Contains(p.Id))
+        //        .ToListAsync();
+
+        //    var order = new Order
+        //    {
+        //        USE_ID = userId,
+        //        PaymentMethod = "Thanh toán khi nhận hàng",
+        //        Status = StatusOrder.NotConfirmed,
+        //        CancelReason = "",
+        //        Address = create_Order.Address,
+        //        CreatedBy = userName,
+        //        UpdatedBy = userName,
+        //        CreatedDate = DateTime.Now,
+        //        UpdatedDate = DateTime.Now,
+        //    };
+
+        //    decimal total = 0;
+        //    for (int i = 0; i < productIds.Count; i++)
+        //    {
+        //        int productId = productIds[i];
+        //        int quantityInCart = list_quantity[i];
+
+        //        var product = products.FirstOrDefault(p => p.Id == productId);
+        //        if (product == null)
+        //        {
+        //            return BadRequest(new { Message = $"Sản phẩm với ID {productId} không tồn tại." });
+        //        }
+
+        //        if (product.Quantity < quantityInCart)
+        //        {
+        //            return BadRequest(new { Message = $"Sản phẩm {product.BonsaiName} không đủ số lượng trong kho." });
+        //        }
+
+        //        var orderDetail = new OrderDetail
+        //        {
+        //            BONSAI_ID = product.Id,
+        //            Quantity = quantityInCart,
+        //            Price = product.Price,
+        //            ORDER_ID = order.ORDER_ID,
+        //        };
+        //        order.OrderDetails.Add(orderDetail);
+
+        //        product.Quantity -= quantityInCart;
+
+        //        total += product.Price * quantityInCart;
+        //    }
+
+        //    order.Total = total;
+
         //    _context.Orders.Add(order);
         //    await _context.SaveChangesAsync();
 
-        //    return CreatedAtAction("GetOrder", new { id = order.ORDER_ID }, order);
+        //    return Ok(new { Message = "Đặt hàng thành công." });
         //}
     }
 }

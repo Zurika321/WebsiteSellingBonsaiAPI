@@ -10,10 +10,9 @@ namespace WebsiteSellingBonsaiAPI.Models
     {
         [Key]
         public int CART_ID { get; set; }
+        [ForeignKey("ApplicationUser")]
         public string USE_ID { get; set; }
-        [ForeignKey("USE_ID")]
-        public virtual ApplicationUser ApplicationUser { get; set; }
-
-        public virtual ICollection<CartDetail> CartDetails { get; set; }
+        public virtual ApplicationUser? ApplicationUser { get; set; }
+        public virtual ICollection<CartDetail>? CartDetails { get; set; }
     }
 }
