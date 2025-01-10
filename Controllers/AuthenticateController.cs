@@ -98,7 +98,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     UserName = user.UserName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
-                    Address = user.Address,
+                    Address = user.Address == "Không có địa chỉ" ? "" : user.Address,
                     Avatar = user.Avatar,
                     CreatedDate = user.CreatedDate,
                 });
