@@ -7,8 +7,10 @@ namespace WebsiteSellingBonsaiAPI.Models
     public class OrderDetail
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ORDER_D_ID { get; set; }
-        [ForeignKey("Order")]
+
+        [ForeignKey("Orders")]
         public int ORDER_ID { get; set; }
         [ForeignKey("Bonsai")]
         public int BONSAI_ID { get; set; }
@@ -16,8 +18,8 @@ namespace WebsiteSellingBonsaiAPI.Models
         public decimal Price { get; set; }
         public decimal TotalPrice => Quantity * Price;
 
-        public virtual Order Orders { get; set; }
-        public virtual Bonsai Bonsais { get; set; }
+        public virtual Order? Orders { get; set; }
+        public virtual Bonsai? Bonsai { get; set; }
 
     }
 }

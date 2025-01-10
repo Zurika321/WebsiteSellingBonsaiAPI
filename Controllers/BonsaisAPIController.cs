@@ -92,7 +92,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // GET: api/Bonsais/5
         //[AllowAnonymous]
-        [Authorize(Policy = UserRoles.AdminOrUser)]
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<BonsaiDTO>> GetBonsai(int id)
         {
@@ -171,13 +171,18 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         {
             if (id != bonsai.Id)
             {
-                return BadRequest("ID không khớp.");
+                return BadRequest(new { Message = "ID không khớp." });
             }
 
             _context.Entry(bonsai).State = EntityState.Modified;
 
             try
             {
+                var haveBonsaiName = _context.Bonsais.FirstOrDefaultAsync(b => b.BonsaiName == bonsai.BonsaiName);
+                if (haveBonsaiName != null)
+                {
+                    return BadRequest(new { Message = "Tên Bonsai đã tồn tại. Vui lòng đặt tên khác." });
+                }
                 await _context.SaveChangesAsync();
                 return CreatedAtAction(nameof(GetBonsai), new { id = bonsai.Id }, bonsai);
             }
@@ -203,7 +208,12 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         {
             try
             {
-                // Thêm đối tượng bonsai vào cơ sở dữ liệu
+                var haveBonsaiName = _context.Bonsais.FirstOrDefaultAsync(b => b.BonsaiName == bonsai.BonsaiName);
+                if (haveBonsaiName != null)
+                {
+                    return BadRequest(new { Message = "Tên Bonsai đã tồn tại. Vui lòng đặt tên khác." });
+                }
+
                 _context.Bonsais.Add(bonsai);
                 await _context.SaveChangesAsync();
 
@@ -225,14 +235,38 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             var bonsai = await _context.Bonsais.FindAsync(id);
             if (bonsai == null)
             {
-                return NotFound();
+                return NotFound(new { Message = "Không tìm thấy sản phẩm Bonsai." });
             }
 
-            _context.Bonsais.Remove(bonsai);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Bonsais.Remove(bonsai);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Lấy lý do lỗi nếu liên quan đến ràng buộc liên kết
+                string errorMessage = "Không thể xóa sản phẩm Bonsai do nó đang được liên kết với bảng khác.";
 
-            return NoContent();
+                // Log chi tiết lỗi (tuỳ chọn)
+                Console.WriteLine(ex.InnerException?.Message);
+
+                // Trả về thông báo lỗi chi tiết cho client
+                return BadRequest(new { Message = errorMessage });
+            }
+            catch (Exception ex)
+            {
+                // Xử lý các lỗi không mong đợi khác
+                string errorMessage = "Đã xảy ra lỗi không mong đợi.";
+
+                // Log chi tiết lỗi (tuỳ chọn)
+                Console.WriteLine(ex.Message);
+
+                return StatusCode(500, new { Message = errorMessage });
+            }
         }
+
 
         private bool BonsaiExists(int id)
         {

@@ -1,4 +1,4 @@
-﻿namespace WebsiteSellingBonsaiAPI.DTOS.Cart
+﻿namespace WebsiteSellingBonsaiAPI.DTOS.Carts
 {
     public class Update_cart
     {

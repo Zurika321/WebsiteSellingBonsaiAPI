@@ -9,7 +9,7 @@ namespace WebsiteSellingBonsaiAPI.Models
     public class Order : BaseModel
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ORDER_ID { get; set; }
 
         [ForeignKey("ApplicationUser")]
@@ -24,13 +24,13 @@ namespace WebsiteSellingBonsaiAPI.Models
         [StringLength(200)]
         public string Address { get; set; }
 
-        [StringLength(24)]
+        [StringLength(100)]
         public string Status { get; set; }
 
         [Range(0, double.MaxValue, ErrorMessage = "Total must be a positive value.")]
         public decimal Total { get; set; }
 
-        public virtual ApplicationUser ApplicationUser { get; set; }
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+        public virtual ApplicationUser? ApplicationUser { get; set; }
+        public virtual ICollection<OrderDetail>? OrderDetails { get; set; }
     }
 }

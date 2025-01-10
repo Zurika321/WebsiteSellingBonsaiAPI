@@ -13,9 +13,12 @@ using System.Security.Policy;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebsiteSellingBonsaiAPI.DTOS.Constants;
+using WebsiteSellingBonsaiAPI.DTOS.Orders;
 using WebsiteSellingBonsaiAPI.DTOS.User;
+using WebsiteSellingBonsaiAPI.Utils;
 using WebsiteSellingBonsaiAPI.Models;
 using static System.Net.WebRequestMethods;
+using System.Text;
 
 namespace WebsiteSellingBonsaiAPI.Utils
 {
@@ -30,20 +33,22 @@ namespace WebsiteSellingBonsaiAPI.Utils
             _hostEnv = hostEnv;
             _httpClient = httpClientFactory.CreateClient();
 
-            if (_httpClient.DefaultRequestHeaders.Contains("WebsiteSellingBonsai"))
+            // Thêm header 'WebsiteSellingBonsai' nếu chưa tồn tại
+            if (!_httpClient.DefaultRequestHeaders.Contains("WebsiteSellingBonsai"))
             {
-                _httpClient.DefaultRequestHeaders.Remove("WebsiteSellingBonsai");
+                _httpClient.DefaultRequestHeaders.Add("WebsiteSellingBonsai", "kjasdfh32112");
             }
-
-            _httpClient.DefaultRequestHeaders.Add("WebsiteSellingBonsai", "kjasdfh32112");
 
             _httpContextAccessor = httpContextAccessor;
             var token = _httpContextAccessor.HttpContext?.Session.GetString("AuthToken");
-            if (!string.IsNullOrEmpty(token))
+
+            // Thêm header 'Authorization' nếu có token và header chưa tồn tại
+            if (!string.IsNullOrEmpty(token) && !_httpClient.DefaultRequestHeaders.Contains("Authorization"))
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
         }
+
         //public class token
         //{
         //    public string tokenstring { get; set; }
@@ -173,7 +178,15 @@ namespace WebsiteSellingBonsaiAPI.Utils
                     });
                 }
 
-                var errorMessage = $"GET {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                var errorMessage = $"GET LIST {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    errorMessage = "Bạn không có quyền truy cập API này.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    errorMessage = "Bạn cần đăng nhập trước";
+                }
                 return (default, new ThongBao
                 {
                     Message = errorMessage,
@@ -227,6 +240,13 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 }
 
                 var errorMessage = $"GET {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    errorMessage = "Bạn không có quyền truy cập API này.";
+                }else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    errorMessage = "Bạn cần đăng nhập trước";
+                }
                 return (default, new ThongBao
                 {
                     Message = errorMessage,
@@ -249,37 +269,72 @@ namespace WebsiteSellingBonsaiAPI.Utils
         public async Task<(bool Success, ThongBao thongbao)> FetchDataApiPost<T>(string apiEndpoint, T product)
         {
             var Url = GetUrl();
-
             var apiUrl = $"{Url}{apiEndpoint}";
+
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(apiUrl, product);
+                var jsonContent = new StringContent(JsonSerializer.Serialize(product), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(apiUrl, jsonContent);
 
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
-                var message = apiResponse?.Message;
+                string jsonString = await response.Content.ReadAsStringAsync();
+
+                string message = null;
+                if (!string.IsNullOrEmpty(jsonString))
+                {
+                    try
+                    {
+                        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                        message = apiResponse?.Message;
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        // Ghi nhận lỗi JSON và nội dung phản hồi không hợp lệ
+                        message = $"Phản hồi không đúng định dạng JSON: {jsonEx.Message}. Nội dung phản hồi: {jsonString}";
+                    }
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = message ?? "",
+                        Message = message ?? "Thêm dữ liệu thành công.",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
                 }
                 else
                 {
+                    var errorMessage = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                    if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        errorMessage = "Bạn không có quyền truy cập API này.";
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        errorMessage = "Bạn cần đăng nhập trước.";
+                    }
+
                     return (false, new ThongBao
                     {
-                        Message = message ?? $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? errorMessage,
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
                 }
             }
+            catch (HttpRequestException httpEx)
+            {
+                // Lỗi khi kết nối đến API
+                return (false, new ThongBao
+                {
+                    Message = $"Lỗi kết nối API: {httpEx.Message}. Kiểm tra lại đường dẫn hoặc kết nối mạng.",
+                    MessageType = TypeThongBao.Danger,
+                    DisplayTime = 5
+                });
+            }
             catch (Exception ex)
             {
+                // Các lỗi khác
                 return (false, new ThongBao
                 {
                     Message = $"Lỗi khi thực hiện POST {apiUrl}: {ex.Message}",
@@ -289,39 +344,75 @@ namespace WebsiteSellingBonsaiAPI.Utils
             }
         }
 
+
         // Cập nhật dữ liệu qua phương thức PUT
         public async Task<(bool Success, ThongBao thongbao)> FetchDataApiPut<T>(string apiEndpoint, T product)
         {
             var Url = GetUrl();
-
             var apiUrl = $"{Url}{apiEndpoint}";
+
             try
             {
                 var response = await _httpClient.PutAsJsonAsync(apiUrl, product);
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
-                var message = apiResponse?.Message;
+                string jsonString = await response.Content.ReadAsStringAsync();
+
+                string message = null;
+                if (!string.IsNullOrEmpty(jsonString))
+                {
+                    try
+                    {
+                        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                        message = apiResponse?.Message;
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        // Ghi nhận lỗi JSON và nội dung phản hồi không hợp lệ
+                        message = $"Phản hồi không đúng định dạng JSON: {jsonEx.Message}. Nội dung phản hồi: {jsonString}";
+                    }
+                }
+
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, new ThongBao
                     {
-                        Message = message ?? "",
+                        Message = message ?? "Cập nhật dữ liệu thành công.",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
                 }
                 else
                 {
+                    var errorMessage = $"PUT {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                    if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        errorMessage = "Bạn không có quyền truy cập API này.";
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        errorMessage = "Bạn cần đăng nhập trước.";
+                    }
+
                     return (false, new ThongBao
                     {
-                        Message = message ?? $"PUT {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? errorMessage,
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
                 }
             }
+            catch (HttpRequestException httpEx)
+            {
+                // Lỗi khi kết nối đến API
+                return (false, new ThongBao
+                {
+                    Message = $"Lỗi kết nối API: {httpEx.Message}. Kiểm tra lại đường dẫn hoặc kết nối mạng.",
+                    MessageType = TypeThongBao.Danger,
+                    DisplayTime = 5
+                });
+            }
             catch (Exception ex)
             {
+                // Các lỗi khác
                 return (false, new ThongBao
                 {
                     Message = $"Lỗi khi thực hiện PUT {apiUrl}: {ex.Message}",
@@ -331,43 +422,133 @@ namespace WebsiteSellingBonsaiAPI.Utils
             }
         }
 
-        // Xóa dữ liệu qua phương thức DELETE
-        public async Task<(bool Success, ThongBao thongbao)> FetchDataApiDelete(string apiEndpoint,string image)
-        {
-            if(!string.IsNullOrEmpty(image))
-            {
-                DeleteImage(image);
-            }
-            var Url = GetUrl();
 
+        // Xóa dữ liệu qua phương thức DELETE
+        //public async Task<(bool Success, ThongBao thongbao)> FetchDataApiDelete(string apiEndpoint,string image)
+        //{
+
+        //    var Url = GetUrl();
+
+        //    var apiUrl = $"{Url}{apiEndpoint}";
+        //    try
+        //    {
+        //        var response = await _httpClient.DeleteAsync(apiUrl);
+        //        var jsonString = await response.Content.ReadAsStringAsync();
+        //        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+        //        var message = apiResponse?.Message;
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            if(!string.IsNullOrEmpty(image))
+        //            {
+        //                DeleteImage(image);
+        //            }
+        //            return (true, new ThongBao
+        //            {
+        //                Message = message ?? "",
+        //                MessageType = TypeThongBao.Success,
+        //                DisplayTime = 5
+        //            });
+        //        }
+        //        else
+        //        {
+        //            var errorMessage = $"DELETE {apiUrl} thất bại. Status Code: {response.StatusCode}";
+        //            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        //            {
+        //                errorMessage = "Bạn không có quyền truy cập API này.";
+        //            }
+        //            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        //            {
+        //                errorMessage = "Bạn cần đăng nhập trước";
+        //            }
+        //            return (false, new ThongBao
+        //            {
+        //                Message = message ?? errorMessage,
+        //                MessageType = TypeThongBao.Warning,
+        //                DisplayTime = 5
+        //            });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return (false, new ThongBao
+        //        {
+        //            Message = $"Lỗi khi thực hiện DELETE {apiUrl}: {ex.Message}",
+        //            MessageType = TypeThongBao.Danger,
+        //            DisplayTime = 5
+        //        });
+        //    }
+        //}
+        public async Task<(bool Success, ThongBao thongbao)> FetchDataApiDelete(string apiEndpoint, string image)
+        {
+            var Url = GetUrl();
             var apiUrl = $"{Url}{apiEndpoint}";
+
             try
             {
                 var response = await _httpClient.DeleteAsync(apiUrl);
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
-                var message = apiResponse?.Message;
+                string jsonString = await response.Content.ReadAsStringAsync();
+
+                string message = null;
+                if (!string.IsNullOrEmpty(jsonString))
+                {
+                    try
+                    {
+                        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                        message = apiResponse?.Message;
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        // Ghi nhận lỗi JSON và nội dung phản hồi không hợp lệ
+                        message = $"Phản hồi không đúng định dạng JSON: {jsonEx.Message}. Nội dung phản hồi: {jsonString}";
+                    }
+                }
+
                 if (response.IsSuccessStatusCode)
                 {
+                    if (!string.IsNullOrEmpty(image))
+                    {
+                        DeleteImage(image);
+                    }
                     return (true, new ThongBao
                     {
-                        Message = message ?? "",
+                        Message = message ?? "Xóa dữ liệu thành công.",
                         MessageType = TypeThongBao.Success,
                         DisplayTime = 5
                     });
                 }
                 else
                 {
+                    var errorMessage = $"DELETE {apiUrl} thất bại. Status Code: {response.StatusCode}";
+                    if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        errorMessage = "Bạn không có quyền truy cập API này.";
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        errorMessage = "Bạn cần đăng nhập trước.";
+                    }
+
                     return (false, new ThongBao
                     {
-                        Message = message ?? $"DELETE {apiUrl} thất bại. Status Code: {response.StatusCode}",
+                        Message = message ?? errorMessage,
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     });
                 }
             }
+            catch (HttpRequestException httpEx)
+            {
+                // Lỗi khi kết nối đến API
+                return (false, new ThongBao
+                {
+                    Message = $"Lỗi kết nối API: {httpEx.Message}. Kiểm tra lại đường dẫn hoặc kết nối mạng.",
+                    MessageType = TypeThongBao.Danger,
+                    DisplayTime = 5
+                });
+            }
             catch (Exception ex)
             {
+                // Các lỗi khác
                 return (false, new ThongBao
                 {
                     Message = $"Lỗi khi thực hiện DELETE {apiUrl}: {ex.Message}",
@@ -377,6 +558,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
             }
         }
 
+
         // đăng ký 
         public async Task<(bool Success, ThongBao thongbao)> Register(RegisterModel register)
         {
@@ -384,9 +566,15 @@ namespace WebsiteSellingBonsaiAPI.Utils
             string apiUrl = $"{Url}Authenticate/register";
             try
             {
+                //var jsonContent = new StringContent(JsonSerializer.Serialize(register), Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, register);
                 var jsonString = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<ResponseModel>(jsonString);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                //var apiResponse = JsonSerializer.Deserialize<ResponseModel>(jsonString,options);
+                var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
                 var message = apiResponse?.Message;
 
                 if (response.IsSuccessStatusCode)
@@ -427,18 +615,18 @@ namespace WebsiteSellingBonsaiAPI.Utils
             {
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, login);
 
+                var apiResponse = await response.Content.ReadFromJsonAsync<ResponseModel>();
+                if (apiResponse.Status == "Error")
+                {
+                    return (false, new ThongBao
+                    {
+                        Message = apiResponse.Message,
+                        MessageType = TypeThongBao.Warning,
+                        DisplayTime = 5
+                    }, "");
+                }
                 if (response.IsSuccessStatusCode)
                 {
-                    var apiResponse = await response.Content.ReadFromJsonAsync<ResponseModel>();
-                    if (apiResponse.Status == "Error")
-                    {
-                        return (false, new ThongBao
-                        {
-                            Message = apiResponse.Message,
-                            MessageType = TypeThongBao.Warning,
-                            DisplayTime = 5
-                        }, "");
-                    }
                     _httpContextAccessor.HttpContext?.Session.SetString("AuthToken", apiResponse.Message );
                     var (Success, thongbao, userInfo) = await Getuserinfo(apiResponse.Message);
                     _httpContextAccessor.HttpContext?.Session.Set<ApplicationUser>("userInfo", userInfo);
@@ -454,7 +642,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 {
                     return (false, new ThongBao
                     {
-                        Message = $"POST {apiUrl} thất bại. Status Code: {response.RequestMessage}",
+                        Message = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}",
                         MessageType = TypeThongBao.Warning,
                         DisplayTime = 5
                     }, "");
@@ -522,5 +710,248 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 });
             }
         }
+
+        //Create payment
+        public async Task<(bool Success, ThongBao thongbao)> Create_Session_Payment(Create_order create_Order)
+        {
+            if (string.IsNullOrEmpty(create_Order.Address)) return (false, new ThongBao
+            {
+                Message = "Vui lòng nhập địa chỉ để giao hàng",
+                MessageType = TypeThongBao.Warning,
+                DisplayTime = 5
+            });
+            var Url = GetUrl();
+            string apiUrl = $"{Url}OrdersAPI/create_payment";
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(apiUrl, create_Order);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var order = Newtonsoft.Json.JsonConvert.DeserializeObject<Order>(
+                        await response.Content.ReadAsStringAsync()
+                    );
+
+                    if (order != null)
+                    {
+                        // Lưu trữ đối tượng Order vào session
+                        _httpContextAccessor.HttpContext?.Session.Set<Order>("Payment_Order", order);
+                        //_httpContextAccessor.HttpContext?.Session.Set("ThongBao", new ThongBao
+                        //{
+                        //    Message =  order.Address,
+                        //    MessageType = TypeThongBao.Success,
+                        //    DisplayTime = 5
+                        //});
+                        return (true, new ThongBao
+                        {
+                            Message = "Tạo session thành công",
+                            MessageType = TypeThongBao.Success,
+                            DisplayTime = 5
+                        });
+                    }
+                    else
+                    {
+                        return (false, new ThongBao
+                        {
+                            Message = "Không thể chuyển đổi dữ liệu từ API.",
+                            MessageType = TypeThongBao.Warning,
+                            DisplayTime = 5
+                        });
+                    }
+                }
+                else
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+                    var message = apiResponse?.Message;
+                    return (false, new ThongBao
+                    {
+                        Message = message ?? $"POST {apiUrl} thất bại. Mã trạng thái: {response.StatusCode}",
+                        MessageType = TypeThongBao.Warning,
+                        DisplayTime = 5
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, new ThongBao
+                {
+                    Message = $"Lỗi khi thực hiện POST {apiUrl}: {ex.Message}",
+                    MessageType = TypeThongBao.Danger,
+                    DisplayTime = 5
+                });
+            }
+        }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+//public async Task<(bool Success, ThongBao thongbao)> FetchDataApiPost<T>(string apiEndpoint, T product)
+//{
+//    var Url = GetUrl();
+
+//    var apiUrl = $"{Url}{apiEndpoint}";
+//    try
+//    {
+//        var jsonContent = new StringContent(JsonSerializer.Serialize(product), Encoding.UTF8, "application/json");
+//        var response = await _httpClient.PostAsync(apiUrl, jsonContent);
+//        //var response = await _httpClient.PostAsJsonAsync(apiUrl, product);
+
+//        var jsonString = await response.Content.ReadAsStringAsync();
+//        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+//        var message = apiResponse?.Message;
+
+//        if (response.IsSuccessStatusCode)
+//        {
+//            return (true, new ThongBao
+//            {
+//                Message = message ?? "",
+//                MessageType = TypeThongBao.Success,
+//                DisplayTime = 5
+//            });
+//        }
+//        else
+//        {
+//            var errorMessage = $"POST {apiUrl} thất bại. Status Code: {response.StatusCode}";
+//            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+//            {
+//                errorMessage = "Bạn không có quyền truy cập API này.";
+//            }
+//            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+//            {
+//                errorMessage = "Bạn cần đăng nhập trước";
+//            }
+//            return (false, new ThongBao
+//            {
+//                Message = message ?? errorMessage,
+//                MessageType = TypeThongBao.Warning,
+//                DisplayTime = 5
+//            });
+//        }
+//    }
+//    catch (Exception ex)
+//    {
+//        return (false, new ThongBao
+//        {
+//            Message = $"Lỗi khi thực hiện POST {apiUrl}: {ex.Message}",
+//            MessageType = TypeThongBao.Danger,
+//            DisplayTime = 5
+//        });
+//    }
+//}
+
+
+//public async Task<(bool Success, ThongBao thongbao)> FetchDataApiPut<T>(string apiEndpoint, T product)
+//{
+//    var Url = GetUrl();
+
+//    var apiUrl = $"{Url}{apiEndpoint}";
+//    try
+//    {
+//        var response = await _httpClient.PutAsJsonAsync(apiUrl, product);
+//        var jsonString = await response.Content.ReadAsStringAsync();
+//        var apiResponse = JsonSerializer.Deserialize<mes>(jsonString);
+//        var message = apiResponse?.Message;
+//        if (response.IsSuccessStatusCode)
+//        {
+//            return (true, new ThongBao
+//            {
+//                Message = message ?? "",
+//                MessageType = TypeThongBao.Success,
+//                DisplayTime = 5
+//            });
+//        }
+//        else
+//        {
+//            var errorMessage = $"PUT {apiUrl} thất bại. Status Code: {response.StatusCode}";
+//            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+//            {
+//                errorMessage = "Bạn không có quyền truy cập API này.";
+//            }
+//            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+//            {
+//                errorMessage = "Bạn cần đăng nhập trước";
+//            }
+//            return (false, new ThongBao
+//            {
+//                Message = message ?? errorMessage,
+//                MessageType = TypeThongBao.Warning,
+//                DisplayTime = 5
+//            });
+//        }
+//    }
+//    catch (Exception ex)
+//    {
+//        return (false, new ThongBao
+//        {
+//            Message = $"Lỗi khi thực hiện PUT {apiUrl}: {ex.Message}",
+//            MessageType = TypeThongBao.Danger,
+//            DisplayTime = 5
+//        });
+//    }
+//}
+
+//public async Task<(bool Success, ThongBao thongbao)> Register(RegisterModel register)
+//{
+//    var Url = GetUrl();
+//    string apiUrl = $"{Url}Authenticate/register";
+//    try
+//    {
+//        var response = await _httpClient.PostAsJsonAsync(apiUrl, register);
+//        var jsonString = await response.Content.ReadAsStringAsync();
+
+//        // Kiểm tra nội dung phản hồi
+//        Console.WriteLine($"API Response: {jsonString}");
+
+//        if (!response.IsSuccessStatusCode)
+//        {
+//            return (false, new ThongBao
+//            {
+//                Message = $"POST {apiUrl} thất bại. Nội dung phản hồi: {jsonString}",
+//                MessageType = TypeThongBao.Warning,
+//                DisplayTime = 5
+//            });
+//        }
+
+//        var options = new JsonSerializerOptions
+//        {
+//            PropertyNameCaseInsensitive = true
+//        };
+//        var apiResponse = JsonSerializer.Deserialize<ResponseModel>(jsonString, options);
+
+//        if (apiResponse == null || string.IsNullOrEmpty(apiResponse.Message))
+//        {
+//            return (false, new ThongBao
+//            {
+//                Message = "Phản hồi từ API không hợp lệ.",
+//                MessageType = TypeThongBao.Warning,
+//                DisplayTime = 5
+//            });
+//        }
+
+//        return (true, new ThongBao
+//        {
+//            Message = apiResponse.Message,
+//            MessageType = TypeThongBao.Success,
+//            DisplayTime = 5
+//        });
+//    }
+//    catch (Exception ex)
+//    {
+//        return (false, new ThongBao
+//        {
+//            Message = $"Lỗi khi thực hiện POST {apiUrl}: {ex.Message}",
+//            MessageType = TypeThongBao.Danger,
+//            DisplayTime = 5
+//        });
+//    }
+//}

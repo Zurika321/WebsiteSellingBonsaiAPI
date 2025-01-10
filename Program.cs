@@ -2,12 +2,14 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using WebsiteSellingBonsaiAPI.DTOS.Constants;
 using WebsiteSellingBonsaiAPI.DTOS.User;
 using WebsiteSellingBonsaiAPI.Models;
+using WebsiteSellingBonsaiAPI.Utils;
 
 namespace WebsiteSellingBonsaiAPI
 {
@@ -141,8 +143,10 @@ namespace WebsiteSellingBonsaiAPI
                 options.ClaimsIdentity.UserIdClaimType = "sub";
             });
 
-
             // Đăng ký AuthService làm dịch vụ
+            builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            builder.Services.AddScoped<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<EmailSender>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             var app = builder.Build();

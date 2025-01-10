@@ -21,7 +21,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpContextAccessor _httpContextAccessor; 
         private readonly EmailSender _emailSender;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
@@ -56,6 +56,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             {
                 UserName = model.Username,
                 Email = model.Email,
+                Address = "Không có địa chỉ",
                 Avatar = "Data/usernoimage.png",
                 CreatedDate = DateTime.Now,
             };
@@ -94,7 +95,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             // Kiểm tra xem người dùng có tồn tại không
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-                return (null, null, null, "Invalid credentials!");
+                return (null, null, null, "Username hoặc password bị sai!");
 
             // Kiểm tra trạng thái EmailConfirmed
             if (!await _userManager.IsEmailConfirmedAsync(user))
@@ -122,7 +123,8 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["JWT:ExpireMinutes"])),
+                //expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["JWT:ExpireMinutes"])),
+                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["JWT:ExpireMinutes"])),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );
