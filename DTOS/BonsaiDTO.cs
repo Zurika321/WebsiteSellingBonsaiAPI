@@ -37,7 +37,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS
         [CustomValidation(typeof(Bonsai), nameof(ValidateLifeSpan))]
         public int MaxLife { get; set; }
 
-        [Range(0, 100000, ErrorMessage = "Giá phải nằm trong khoảng từ 0 đến 100,000.000")]
+        [Range(100, 100000, ErrorMessage = "Giá phải nằm trong khoảng từ 100.000 đến 100,000.000")]
         public decimal Price { get; set; }
 
         [Range(0, 100, ErrorMessage = "Số lượng không được âm hoặc lớn hơn 100.")]

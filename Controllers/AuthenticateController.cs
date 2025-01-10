@@ -49,16 +49,16 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         {
             if (model == null)
             {
-                return BadRequest("Payload không hợp lệ.");
+                return BadRequest(new { Message = "Payload không hợp lệ." });/*(new ResponseModel { Status = "Error", Message = "Payload không hợp lệ." });*/
             }
             var (isSuccess, message) = await _authService.RegisterUser(model);
 
             if (!isSuccess)
             {
-                return StatusCode(500, new ResponseModel { Status = "Error", Message = message });
+                return StatusCode(500, new { Message = message });/*new ResponseModel { Status = "Error", Message = message });*/
             }
 
-            return Ok(new ResponseModel { Status = "Success", Message = message });
+            return Ok(new { Message = message }); /*new ResponseModel { Status = "Success", Message = message });*/
         }
 
         [AllowAnonymous]
@@ -98,7 +98,9 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     UserName = user.UserName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
+                    Address = user.Address,
                     Avatar = user.Avatar,
+                    CreatedDate = user.CreatedDate,
                 });
             }
             catch (Exception ex)

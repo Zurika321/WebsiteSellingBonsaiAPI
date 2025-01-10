@@ -356,6 +356,22 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                         }
 
                         bonsai.Quantity -= detail.Quantity;
+
+                        var cart = await _context.Carts
+                                    .Include(c => c.CartDetails)
+                                    .FirstOrDefaultAsync(c => c.USE_ID == ordernew.USE_ID);
+
+                        if (cart != null)
+                        {
+                            var cartDetailsToRemove = cart.CartDetails
+                                .Where(cd => cd.BONSAI_ID == detail.BONSAI_ID)
+                                .ToList();
+
+                            if (cartDetailsToRemove.Any())
+                            {
+                                _context.CartDetails.RemoveRange(cartDetailsToRemove);
+                            }
+                        }
                     }
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();

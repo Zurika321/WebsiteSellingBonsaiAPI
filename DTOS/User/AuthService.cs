@@ -56,6 +56,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             {
                 UserName = model.Username,
                 Email = model.Email,
+                Address = "Không có địa chỉ",
                 Avatar = "Data/usernoimage.png",
                 CreatedDate = DateTime.Now,
             };
