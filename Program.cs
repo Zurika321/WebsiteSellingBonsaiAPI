@@ -145,6 +145,7 @@ namespace WebsiteSellingBonsaiAPI
 
             // Đăng ký AuthService làm dịch vụ
             builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            builder.Services.AddScoped<IUrlService, UrlService>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<EmailSender>();
             builder.Services.AddScoped<IAuthService, AuthService>();

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebsiteSellingBonsaiAPI.Models
 {
+    [Table("Bonsais")]
     public class Bonsai : BaseModel
     {
         [Key]
@@ -56,6 +57,7 @@ namespace WebsiteSellingBonsaiAPI.Models
 
         [ForeignKey("GeneralMeaningId")]
         public virtual GeneralMeaning? GeneralMeaning { get; set; }
+        public virtual ICollection<Favourite> Favourites { get; set; }
 
         public static ValidationResult? ValidateLifeSpan(object? value, ValidationContext context)
         {

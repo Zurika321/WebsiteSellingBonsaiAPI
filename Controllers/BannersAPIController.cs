@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebsiteSellingBonsaiAPI.DTOS;
 using WebsiteSellingBonsaiAPI.DTOS.Constants;
+using WebsiteSellingBonsaiAPI.DTOS.View;
 using WebsiteSellingBonsaiAPI.Models;
 
 namespace WebsiteSellingBonsaiAPI.Controllers

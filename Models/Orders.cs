@@ -9,7 +9,7 @@ namespace WebsiteSellingBonsaiAPI.Models
     public class Order : BaseModel
     {
         [Key]
-        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ORDER_ID { get; set; }
 
         [ForeignKey("ApplicationUser")]

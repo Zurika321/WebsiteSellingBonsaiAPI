@@ -1,6 +1,6 @@
 ﻿using WebsiteSellingBonsaiAPI.Models;
 
-namespace WebsiteSellingBonsaiAPI.DTOS
+namespace WebsiteSellingBonsaiAPI.DTOS.View
 {
     public class PhanLoaiBonsaiDTO
     {

@@ -95,7 +95,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
         [HttpGet("current")]
         public async Task<ActionResult<IEnumerable<Order>>> GetOrdersForCurrentDateMonthYear()
         {
-            DateTime currentDate = DateTime.Now.Date;
+            DateTime currentDate = DateTime.Now;
             int currentMonth = currentDate.Month;
             int currentYear = currentDate.Year;
 
@@ -354,8 +354,6 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                         {
                             return BadRequest(new { Message = $"Số lượng Bonsai không đủ {detail.Quantity} sản phẩm.{bonsai.BonsaiName} còn lại: {bonsai.Quantity} sản phẩm" });
                         }
-
-                        bonsai.Quantity -= detail.Quantity;
 
                         var cart = await _context.Carts
                                     .Include(c => c.CartDetails)

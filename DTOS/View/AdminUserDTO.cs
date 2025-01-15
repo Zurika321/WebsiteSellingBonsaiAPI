@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 using System.ComponentModel.DataAnnotations;
 
-namespace WebsiteSellingBonsaiAPI.DTOS
+namespace WebsiteSellingBonsaiAPI.DTOS.View
 {
     public class AdminUserDTO
     {
