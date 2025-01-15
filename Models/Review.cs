@@ -9,10 +9,10 @@ namespace WebsiteSellingBonsaiAPI.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ReviewId { get; set; }
+        public int REVIEW_ID { get; set; }
 
         [ForeignKey("Bonsai")]
-        public int BonsaiId { get; set; }
+        public int BONSAI_ID { get; set; }
 
         [ForeignKey("ApplicationUser")]
         public string USE_ID { get; set; }

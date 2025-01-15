@@ -851,20 +851,10 @@
         }
       }
     },
-    "/api/CartsAPI/{userId}": {
+    "/api/CartsAPI/GetCart": {
       "get": {
         "tags": [
           "CartsAPI"
-        ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "responses": {
           "200": {
@@ -1512,7 +1502,7 @@
         }
       }
     },
-    "/api/OrdersAPI/create_order": {
+    "/api/OrdersAPI/create_payment": {
       "post": {
         "tags": [
           "OrdersAPI"
@@ -1532,6 +1522,54 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/Create_order"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/OrdersAPI/create_order": {
+      "post": {
+        "tags": [
+          "OrdersAPI"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
               }
             }
           }
@@ -2161,7 +2199,7 @@
           },
           "price": {
             "maximum": 100000,
-            "minimum": 0,
+            "minimum": 100,
             "type": "number",
             "format": "double"
           },
@@ -2358,7 +2396,7 @@
             "nullable": true
           },
           "address": {
-            "maxLength": 200,
+            "maxLength": 500,
             "minLength": 0,
             "type": "string",
             "nullable": true
@@ -2514,7 +2552,7 @@
             "nullable": true
           },
           "status": {
-            "maxLength": 24,
+            "maxLength": 100,
             "minLength": 0,
             "type": "string",
             "nullable": true
@@ -2568,7 +2606,7 @@
           "orders": {
             "$ref": "#/components/schemas/Order"
           },
-          "bonsais": {
+          "bonsai": {
             "$ref": "#/components/schemas/Bonsai"
           }
         },

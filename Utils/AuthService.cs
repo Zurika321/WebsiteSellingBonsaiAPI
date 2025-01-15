@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using WebsiteSellingBonsaiAPI.Utils;
 using Azure.Core;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using NuGet.Common;
@@ -14,41 +13,74 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.WebUtilities;
 
-namespace WebsiteSellingBonsaiAPI.DTOS.User
+namespace WebsiteSellingBonsaiAPI.Utils
 {
     public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly IHttpContextAccessor _httpContextAccessor; 
         private readonly EmailSender _emailSender;
-        private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IActionContextAccessor _actionContextAccessor;
+        private readonly IUrlService _urlService;
 
         public AuthService(
-    UserManager<ApplicationUser> userManager,
-    IConfiguration configuration,
-    IHttpContextAccessor httpContextAccessor,
-    EmailSender emailSender,
-    IUrlHelperFactory urlHelperFactory,
-    IActionContextAccessor actionContextAccessor)
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration,
+            EmailSender emailSender,
+            IActionContextAccessor actionContextAccessor,
+            IUrlService urlService)
         {
             _userManager = userManager;
             _configuration = configuration;
-            _httpContextAccessor = httpContextAccessor;
             _emailSender = emailSender;
-            _urlHelperFactory = urlHelperFactory;
             _actionContextAccessor = actionContextAccessor;
+            _urlService = urlService;
+        }
+
+        public (bool, string) IsValidEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return (false, "Email không được rỗng.");
+
+            if (!email.Contains("@"))
+                return (false, "Email phải chứa ký tự '@'.");
+
+            var parts = email.Split('@');
+            if (parts.Length != 2)
+                return (false, "Email phải chứa đúng một ký tự '@'.");
+
+            var localPart = parts[0];
+            var domainPart = parts[1];
+
+            if (string.IsNullOrWhiteSpace(localPart))
+                return (false, "Tên cục bộ của email không được rỗng.");
+
+            if (string.IsNullOrWhiteSpace(domainPart) || domainPart != "gmail.com")
+                return (false, "Tên miền mặc định là gmail.com.");
+
+            return (true, "");
         }
 
         public async Task<(bool IsSuccess, string Message)> RegisterUser([FromForm] RegisterModel model)
         {
             // Kiểm tra xem người dùng đã tồn tại hay chưa
             var userExists = await _userManager.FindByNameAsync(model.Username);
+            var emailExists = await _userManager.FindByEmailAsync(model.Email);
             if (userExists != null)
             {
-                return (false, "User already exists!");
+                return (false, "Tên người dùng đã tồn tại!");
+            }
+            var (IsValid, mes) = IsValidEmail(model.Email);
+            if (!IsValid)
+            {
+                return (false, mes);
+            }
+            if (emailExists != null)
+            {
+                return (false, "Email đã tồn tại!");
             }
 
             // Tạo đối tượng người dùng
@@ -72,13 +104,16 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             }
 
             var actionContext = _actionContextAccessor.ActionContext;
-            var urlHelper = _urlHelperFactory.GetUrlHelper(actionContext);
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = urlHelper.Action(
-                action: "ConfirmEmail",
-                controller: "Users",
-                values: new { userId = user.Id, token, area = "Admin" },
-                protocol: actionContext.HttpContext.Request.Scheme);
+
+            var confirmationLink = _urlService.GenerateUrl(
+                                    action: "ConfirmEmail",
+                                    controller: "Users",
+                                    values: new { userId = user.Id, token },
+                                    area: "Admin",
+                                    scheme: actionContext.HttpContext.Request.Scheme
+            );
+
 
             await _emailSender.SendEmailAsync(user.Email,
                 "Xác nhận tài khoản",
@@ -113,9 +148,13 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
             };
 
             // Thêm vai trò vào claims
-            foreach (var role in roles)
+            //foreach (var role in roles)
+            //{
+            //    authClaims.Add(new Claim(ClaimTypes.Role, role));
+            //}
+            if (roles.Any())
             {
-                authClaims.Add(new Claim(ClaimTypes.Role, role));
+                authClaims.Add(new Claim(ClaimTypes.Role, roles.First()));
             }
 
             // Tạo token
@@ -135,6 +174,47 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
 
             // Trả về token, thời gian hết hạn và danh sách vai trò
             return (tokenString, token.ValidTo, roles.ToList(), null);
+        }
+        public async Task<(bool issuccess,string mes)> ForgotPassword ([FromForm] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return (false, "Vui lòng nhập Email");
+            }
+
+            var (isValid, mes) = IsValidEmail(email);
+
+            if (!isValid)
+            {
+                return (false, mes );
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return (false, "Không tìm thấy user để gửi email!");
+                //return (false",Đã gửi email xác nhận quên mật khẩu!"); // Tránh cho người dùng nhập bừa tài khoản rồi gửi liên tục
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var tokenBytes = Encoding.UTF8.GetBytes(token);
+            var encodedToken = WebEncoders.Base64UrlEncode(tokenBytes);
+            var actionContext = _actionContextAccessor.ActionContext;
+
+            var resetLink = _urlService.GenerateUrl(
+                action: "ResetPassword",
+                controller: "Users",
+                values: new { userId = user.Id, token = encodedToken },
+                area: "Admin",
+                scheme: actionContext.HttpContext.Request.Scheme
+            );
+
+            await _emailSender.SendEmailAsync(user.Email,
+            "Đặt lại mật khẩu",
+            $"Vui lòng nhấp vào liên kết sau để đặt lại mật khẩu: <a href='{resetLink}'>Đặt lại mật khẩu</a>");
+
+
+            return (true, "Gửi email xác nhận reset password thành công!");
         }
     }
 

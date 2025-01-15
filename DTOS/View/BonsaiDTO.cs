@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using WebsiteSellingBonsaiAPI.Models;
 using System.ComponentModel;
 
-namespace WebsiteSellingBonsaiAPI.DTOS
+namespace WebsiteSellingBonsaiAPI.DTOS.View
 {
     public class BonsaiDTO : BaseModel
     {
@@ -59,6 +59,10 @@ namespace WebsiteSellingBonsaiAPI.DTOS
         public int GeneralMeaningId { get; set; }
         [ForeignKey("GeneralMeaningId")]
         public GeneralMeaning? GeneralMeaning { get; set; }
+
+        public int? CountFav { get; set; }
+        public bool? IsFav { get; set; } = false;
+        public virtual ICollection<Favourite>? Favourites { get; set; }
         public static ValidationResult? ValidateLifeSpan(object? value, ValidationContext context)
         {
             var instance = (Bonsai)context.ObjectInstance;

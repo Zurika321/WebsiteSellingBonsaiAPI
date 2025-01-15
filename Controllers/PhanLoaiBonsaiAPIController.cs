@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebsiteSellingBonsaiAPI.DTOS;
 using System.Net.Http;
 using WebsiteSellingBonsaiAPI.Models;
+using WebsiteSellingBonsaiAPI.DTOS.View;
 
 namespace WebsiteSellingBonsaiAPI.Controllers
 {

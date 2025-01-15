@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace WebsiteSellingBonsaiAPI.DTOS
+namespace WebsiteSellingBonsaiAPI.DTOS.View
 {
     public class BannerDTO
     {

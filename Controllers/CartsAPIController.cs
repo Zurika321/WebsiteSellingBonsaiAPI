@@ -28,58 +28,60 @@ namespace WebsiteSellingBonsaiAPI.Controllers
             _userManager = userManager;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("GetCart")]
         public async Task<ActionResult<Cart>> GetCart()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             if (userId == null)
             {
                 return Unauthorized(new { Message = "Người dùng chưa đăng nhập." });
             }
 
-            try
+            var cart = await _context.Carts
+                    .Include(c => c.CartDetails)
+                .ThenInclude(cd => cd.Bonsai)
+                .FirstOrDefaultAsync(c => c.USE_ID == userId);
+
+            if (cart == null)
             {
-                var cart = await _context.Carts
-                        //.Include(c => c.CartDetails)
-                    //.ThenInclude(cd => cd.Bonsai)
-                    .FirstOrDefaultAsync(c => c.USE_ID == userId);
-
-                var cartdetail = await _context.CartDetails.ToListAsync();
-                //                //.Include(cd => cd.Bonsai)
-                //                .Where(cd => cd.CART_ID == cart.CART_ID)
-                //                .ToArrayAsync();
-
-                //cart.CartDetails = cartdetail;
-
-                //if (cart == null)
-                //{
-                //    // Nếu giỏ hàng chưa tồn tại, tạo mới
-                //    cart = new Cart
-                //    {
-                //        USE_ID = userId,
-                //        CreatedBy = User.Identity.Name,
-                //        CreatedDate = DateTime.Now,
-                //        UpdatedBy = User.Identity.Name,
-                //        UpdatedDate = DateTime.Now,
-                //    };
-                //    _context.Carts.Add(cart);
-                //    await _context.SaveChangesAsync();
-                //    cart.CartDetails = new List<CartDetail>();
-                //}
-                //if (cart.CartDetails == null)
-                //{
-                //    cart.CartDetails = new List<CartDetail>();
-                //}
+                // Nếu giỏ hàng chưa tồn tại, tạo mới
+                cart = new Cart
+                {
+                    USE_ID = userId,
+                    CreatedBy = User.Identity.Name,
+                    CreatedDate = DateTime.Now,
+                    UpdatedBy = User.Identity.Name,
+                    UpdatedDate = DateTime.Now,
+                };
+                _context.Carts.Add(cart);
+                await _context.SaveChangesAsync();
+                cart.CartDetails = new List<CartDetail>();
                 return Ok(cart);
+
             }
-            catch (Exception ex)
+            else
             {
-                return StatusCode(500, new { Message = "Đã có lỗi xảy ra. Vui lòng thử lại sau." });
+                var cartt = new Cart
+                {
+                    USE_ID = cart.USE_ID,
+                    CreatedBy = cart.CreatedBy,
+                    CreatedDate = cart.CreatedDate,
+                    UpdatedBy = cart.UpdatedBy,
+                    UpdatedDate = cart.UpdatedDate,
+                    CartDetails = cart.CartDetails.Select(c => new CartDetail
+                    {
+                        CART_D_ID = c.CART_D_ID,
+                        CART_ID = c.CART_ID,
+                        Bonsai = c.Bonsai,
+                        BONSAI_ID = c.BONSAI_ID,
+                        Quantity = c.Quantity,
+                        Price = c.Price,
+                    }).ToList(),
+                };
+                return Ok(cartt);
             }
         }
-
 
         [Authorize]
         [HttpPost("AddBonsai")]

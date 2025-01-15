@@ -1,41 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using WebsiteSellingBonsaiAPI.Models;
+using System.Text.RegularExpressions;
 
 namespace WebsiteSellingBonsaiAPI.DTOS.User
 {
-    using System.ComponentModel.DataAnnotations;
-    using System.Text.RegularExpressions;
-
-    public class RegisterModel
+    public class ResetPassword
     {
-        [Required(ErrorMessage = "Tên đăng nhập không được để trống.")]
-        [MinLength(3, ErrorMessage = "Tên đăng nhập quá ngắn.")]
-        [MaxLength(15, ErrorMessage = "Tên đăng nhập quá dài.")]
-        [CustomValidation(typeof(RegisterModel), nameof(ValidateUserName))]
-        public string Username { get; set; }
-
-        [Required(ErrorMessage = "Email không được để trống.")]
-        [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
-        public string Email { get; set; }
-
         [Required(ErrorMessage = "Mật khẩu không được để trống.")]
         [CustomValidation(typeof(RegisterModel), nameof(ValidatePassword))]
-        public string Password { get; set; }
-
+        public string newpassword { get; set; }
         [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]
-        [Compare(nameof(Password), ErrorMessage = "Mật khẩu và mật khẩu xác nhận không giống nhau.")]
-        public string ComfrimPassword { get; set; }
-
-        public static ValidationResult? ValidateUserName(object? value, ValidationContext context)
-        {
-            if (value is string str && string.IsNullOrWhiteSpace(str))
-            {
-                return new ValidationResult("Tên đăng nhập không được toàn khoảng trắng.");
-            }
-
-            return ValidationResult.Success;
-        }
+        [Compare(nameof(newpassword), ErrorMessage = "Mật khẩu và mật khẩu xác nhận không giống nhau.")]
+        public string Comfirmpassword { get; set; }
+        public string userid { get; set; }
+        public string token { get; set; }
         public static ValidationResult? ValidatePassword(object? value, ValidationContext context)
         {
             var password = value as string;
