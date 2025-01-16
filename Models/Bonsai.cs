@@ -41,7 +41,8 @@ namespace WebsiteSellingBonsaiAPI.Models
 
         public double? NOPWR { get; set; } = 0;
 
-        public int? Rates { get; set; } = 0;
+        [Range(0,5)]
+        public double? Rates { get; set; } = 0;
 
         public int TypeId { get; set; }
 
@@ -57,7 +58,7 @@ namespace WebsiteSellingBonsaiAPI.Models
 
         [ForeignKey("GeneralMeaningId")]
         public virtual GeneralMeaning? GeneralMeaning { get; set; }
-        public virtual ICollection<Favourite> Favourites { get; set; }
+        public virtual ICollection<Favourite>? Favourites { get; set; }
 
         public static ValidationResult? ValidateLifeSpan(object? value, ValidationContext context)
         {

@@ -50,7 +50,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
                 return new ValidationResult("Mật khẩu phải có ít nhất 7 ký tự.");
             }
 
-            if (password.Length > 15)
+            if (password.Length > 12)
             {
                 return new ValidationResult("Mật khẩu không được vượt quá 15 ký tự.");
             }

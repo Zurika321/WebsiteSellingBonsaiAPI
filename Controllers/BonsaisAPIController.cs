@@ -116,7 +116,7 @@ namespace WebsiteSellingBonsaiAPI.Controllers
 
         // GET: api/Bonsais/5
         //[AllowAnonymous]
-        [Authorize]
+        //[Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<BonsaiDTO>> GetBonsai(int id)
         {
@@ -149,7 +149,12 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 nopwr = bonsai.NOPWR,
                 rates = bonsai.Rates,
                 TypeId = bonsai.TypeId,
-                Favourites = bonsai.Favourites,
+                Favourites = bonsai.Favourites.Select(f => new Favourite
+                {
+                    BONSAI_ID = f.BONSAI_ID,
+                    Fav = f.Fav,
+                    USE_ID = f.USE_ID
+                }).ToList(),
                 CountFav = bonsai.Favourites?.Count() ?? 0,
                 Type = bonsai.Type != null ? new BonsaiType
                 {
@@ -186,9 +191,8 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 UpdatedDate = bonsai.UpdatedDate,
             };
 
-            return bonsaiDTO;
+            return Ok(bonsaiDTO);
         }
-
 
         // PUT: api/Bonsais/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

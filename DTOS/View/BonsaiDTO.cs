@@ -46,7 +46,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.View
         public IFormFile? Image { get; set; }
         public string? ImageOld { get; set; }
         public double? nopwr { get; set; } = 0;
-        public int? rates { get; set; } = 0;
+        public double? rates { get; set; } = 0;
 
         public int TypeId { get; set; }
         [ForeignKey("TypeId")]
@@ -60,6 +60,7 @@ namespace WebsiteSellingBonsaiAPI.DTOS.View
         [ForeignKey("GeneralMeaningId")]
         public GeneralMeaning? GeneralMeaning { get; set; }
 
+        [DisplayName("Lượt yêu thích")]
         public int? CountFav { get; set; }
         public bool? IsFav { get; set; } = false;
         public virtual ICollection<Favourite>? Favourites { get; set; }
