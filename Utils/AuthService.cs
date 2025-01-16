@@ -80,7 +80,19 @@ namespace WebsiteSellingBonsaiAPI.Utils
             }
             if (emailExists != null)
             {
-                return (false, "Email đã tồn tại!");
+                if (emailExists.EmailConfirmed)
+                {
+                    return (false, "Email đã tồn tại!");
+                }
+                else
+                {
+                    var deleteResult = await _userManager.DeleteAsync(emailExists);
+                    if (!deleteResult.Succeeded)
+                    {
+                        var errors = string.Join(", ", deleteResult.Errors.Select(e => e.Description));
+                        return (false, $"Xóa tài khoản cũ chưa xác nhận thất bại: {errors}");
+                    }
+                }
             }
 
             // Tạo đối tượng người dùng

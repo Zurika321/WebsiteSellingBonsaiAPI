@@ -102,7 +102,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                     await imageFile.CopyToAsync(fileStream);
                 }
 
-                if (!string.IsNullOrEmpty(imageOldPath))
+                if (!string.IsNullOrEmpty(imageOldPath) && imageOldPath != "Data/usernoimage.png" || imageOldPath != "Data/noimage.png")
                 {
                     var erorrdeleteimage = DeleteImage(imageOldPath);
                 }
