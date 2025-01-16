@@ -22,14 +22,14 @@ namespace WebsiteSellingBonsaiAPI.DTOS.User
                 return new ValidationResult("Mật khẩu không được để trống.");
             }
 
-            if (password.Length < 7)
+            if (password.Length < 8)
             {
-                return new ValidationResult("Mật khẩu phải có ít nhất 7 ký tự.");
+                return new ValidationResult("Mật khẩu phải có ít nhất 8 ký tự.");
             }
 
             if (password.Length > 12)
             {
-                return new ValidationResult("Mật khẩu không được vượt quá 15 ký tự.");
+                return new ValidationResult("Mật khẩu không được vượt quá 12 ký tự.");
             }
 
             if (!Regex.IsMatch(password, @"[!@#$%^&*(),.?""{}|<>]"))

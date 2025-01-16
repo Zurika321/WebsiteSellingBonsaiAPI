@@ -58,13 +58,13 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                     rates = bonsai.Rates,
                     TypeId = bonsai.TypeId,
                     IsFav = (userId != null && bonsai.Favourites.FirstOrDefault(f => f.USE_ID == userId && f.Fav == true) != null) ? true : false,
-                    Favourites = bonsai.Favourites.Select(f => new Favourite
+                    Favourites = bonsai.Favourites.Where(f => f.Fav == true).Select(f => new Favourite
                     {
                         BONSAI_ID = f.BONSAI_ID,
                         Fav = f.Fav,
                         USE_ID = f.USE_ID 
                     }).ToList(),
-                    CountFav = bonsai.Favourites?.Count() ?? 0,
+                    CountFav = bonsai.Favourites?.Where(f => f.Fav == true).Count() ?? 0,
                     Type = new BonsaiType
                     {
                         Id = bonsai.Type.Id,
@@ -149,13 +149,13 @@ namespace WebsiteSellingBonsaiAPI.Controllers
                 nopwr = bonsai.NOPWR,
                 rates = bonsai.Rates,
                 TypeId = bonsai.TypeId,
-                Favourites = bonsai.Favourites.Select(f => new Favourite
+                Favourites = bonsai.Favourites.Where(f => f.Fav == true).Select(f => new Favourite
                 {
                     BONSAI_ID = f.BONSAI_ID,
                     Fav = f.Fav,
                     USE_ID = f.USE_ID
                 }).ToList(),
-                CountFav = bonsai.Favourites?.Count() ?? 0,
+                CountFav = bonsai.Favourites.Where(f => f.Fav == true)?.Count() ?? 0,
                 Type = bonsai.Type != null ? new BonsaiType
                 {
                     Id = bonsai.Type.Id,

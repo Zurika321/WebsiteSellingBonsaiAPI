@@ -59,7 +59,7 @@ namespace WebsiteSellingBonsaiAPI.Utils
                 return (false, "Tên cục bộ của email không được rỗng.");
 
             if (string.IsNullOrWhiteSpace(domainPart) || domainPart != "gmail.com")
-                return (false, "Tên miền mặc định là gmail.com.");
+                return (false, "Tên miền mặc định là gmail.com");
 
             return (true, "");
         }
@@ -68,16 +68,8 @@ namespace WebsiteSellingBonsaiAPI.Utils
         {
             // Kiểm tra xem người dùng đã tồn tại hay chưa
             var userExists = await _userManager.FindByNameAsync(model.Username);
-            var emailExists = await _userManager.FindByEmailAsync(model.Email);
-            if (userExists != null)
-            {
-                return (false, "Tên người dùng đã tồn tại!");
-            }
-            var (IsValid, mes) = IsValidEmail(model.Email);
-            if (!IsValid)
-            {
-                return (false, mes);
-            }
+            var emailExists = await _userManager.FindByEmailAsync(model.Email); 
+
             if (emailExists != null)
             {
                 if (emailExists.EmailConfirmed)
@@ -94,6 +86,17 @@ namespace WebsiteSellingBonsaiAPI.Utils
                     }
                 }
             }
+
+            if (userExists != null)
+            {
+                return (false, "Tên người dùng đã tồn tại!");
+            }
+            var (IsValid, mes) = IsValidEmail(model.Email);
+            if (!IsValid)
+            {
+                return (false, mes);
+            }
+           
 
             // Tạo đối tượng người dùng
             var user = new ApplicationUser
@@ -206,6 +209,11 @@ namespace WebsiteSellingBonsaiAPI.Utils
             {
                 return (false, "Không tìm thấy user để gửi email!");
                 //return (false",Đã gửi email xác nhận quên mật khẩu!"); // Tránh cho người dùng nhập bừa tài khoản rồi gửi liên tục
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                return (false, "Email chưa xác nhận.");
             }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
